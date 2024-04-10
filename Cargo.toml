@@ -7,5 +7,8 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4.5.1"
+dotenv = "0.15.0"
+futures-util = "0.3.30"
+jwt-simple = "0.12.9"
 serde = "1.0.197"
-sqlx = "0.7.4"
+sqlx = {version = "0.7.4", features = ["mysql","chrono","runtime-async-std"]}
