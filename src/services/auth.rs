@@ -11,7 +11,7 @@ pub async fn login(creds: web::Json<Account>, pool: web::Data<Arc<Pool<MySql>>>)
     let mut transaction_error = false;
 
     let mut transaction = match pool.begin().await{
-        Ok(dat)=>dat,
+        Ok(dat)=> dat,
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
 

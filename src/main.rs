@@ -16,7 +16,7 @@ async fn main() -> std::io::Result<()> {
 
     let pool:Arc<Pool<MySql>> = Arc::new(MySqlPoolOptions::new()
         .max_connections(10)
-        .connect(&(std::env::var("CONNECTION_STRING").unwrap()))
+        .connect(&(std::env::var("DATABASE_URL").unwrap()))
         .await
         .unwrap());
 
@@ -30,7 +30,7 @@ async fn main() -> std::io::Result<()> {
         // .wrap(Logger::default())
         .service(
             web::scope("/api")
-            // .wrap(Authentication::default())        
+            .wrap(auth::Authentication::default())        
             // .service(get_resorts)
             // .service(get_resort_by_id)
             // .service(get_hotels)
