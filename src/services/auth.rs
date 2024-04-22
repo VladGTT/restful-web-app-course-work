@@ -1,6 +1,5 @@
-use crate::{models::*, templates};
+use crate::{models::*, templates,auth::tokenize};
 use actix_web::{post, web, HttpResponse, Responder};
-use crate::auth::tokenize;
 use std::sync::Arc;
 use sqlx::{mysql::MySql,Pool};
 

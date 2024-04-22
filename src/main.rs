@@ -1,5 +1,6 @@
 
 use std::sync::Arc;
+use services::student::subjects::get_student_subjects;
 use sqlx::{mysql::{MySql, MySqlPoolOptions},Pool};
 use actix_web::{web,App, HttpServer};
 use dotenv;
@@ -30,14 +31,17 @@ async fn main() -> std::io::Result<()> {
         // .wrap(Logger::default())
         .service(
             web::scope("/api")
-            .wrap(auth::Authentication::default())        
-            // .service(get_resorts)
-            // .service(get_resort_by_id)
-            // .service(get_hotels)
-            // .service(get_hotel_by_id)
-            // .service(get_rooms)
-            // .service(get_room_by_id)
-            // .service(get_bookings)
+            // .wrap(auth::Authentication::default())
+            // .service(
+            //     web::scope("/teacher")   
+            // )        
+            .service(
+                web::scope("/student")   
+                .service(get_student_subjects)
+            )
+            // .service(
+            //     web::scope("/admin")
+            // )
         )        
         .service(Auth::login)
     })
