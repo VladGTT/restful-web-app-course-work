@@ -1,11 +1,9 @@
-pub static GET_ACCOUNT_QUERY: &str = "SELECT email,password,role FROM accounts WHERE email = '?';";  
-pub static LOCK_TABLES_QUERY: &str = "LOCK TABLES ? READ WRITE";  
-pub static UNLOCK_TABLES_QUERY: &str = "UNLOCK TABLES";  
-
+pub static GET_ACCOUNT_QUERY: &str = "SELECT email, password, role FROM accounts WHERE email = ?";  
+pub static SET_ISOLATION_QUERY: &str = "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE";
 
 //Запит на вибірку середнього відсотка виконання завдань
 pub static STUDENT_AVG_MARK_QUERY: &str = 
-    "SELECT AVG(mark) FROM assignments_marks WHERE student_id = '?' AND subject_id = ?;";
+    "SELECT AVG(mark) FROM assignments_marks WHERE student_id = ? AND subject_id = ?;";
 
 //Запит на вибірку завдання з максимальним відсотком виконання
 pub static STUDENT_BEST_COMPETED_TASK_QUERY: &str = 
@@ -35,7 +33,7 @@ pub static STUDENT_TASK_COMPLETION_PERCENTAGE_QUERY: &str =
         COUNT(*) 
     FROM 
         assignments_marks
-    WHERE student_id = '?' AND subject_id = ?;"; 
+    WHERE student_id = ? AND subject_id = ?;"; 
 
 //Запит на вибірку відсотка відвіданих занять
 pub static STUDENT_MEETING_ATTENDENCE_PERCENTAGE_QUERY: &str = 
@@ -43,7 +41,7 @@ pub static STUDENT_MEETING_ATTENDENCE_PERCENTAGE_QUERY: &str =
         COUNT(*) 
     FROM 
         attended_meetings
-    WHERE student_id = '?' AND subject_id = ?;"; 
+    WHERE student_id = ? AND subject_id = ?;"; 
 
 //Запит на вибірку даних дисциплін за студентом
 pub static STUDENT_CHOSEN_DISCIPLINES: &str = 
@@ -62,7 +60,7 @@ pub static STUDENT_CHOSEN_DISCIPLINES: &str =
         teachers t ON t.email = sb.teacher_id
     INNER JOIN
         users u ON t.email = u.email
-    WHERE sa.student_id = '?';";
+    WHERE sa.student_id = ?;";
 
 //Запит на вибірку даних викладача за дисципліною
 pub static STUDENT_TEACHERS: &str = 
@@ -71,7 +69,7 @@ pub static STUDENT_TEACHERS: &str =
         u.secondname,
         u.lastname,
         t.occupation,
-        sb.name
+        sb.name AS subject_name 
     FROM 
         teachers t
     INNER JOIN 
@@ -80,7 +78,7 @@ pub static STUDENT_TEACHERS: &str =
         subjects sb ON sb.teacher_id = t.email
     INNER JOIN
         subjects_attendies sa ON sa.subject_id = sb.id
-    WHERE sa.student_id = '?' AND sa.subject_id = ?;";
+    WHERE sa.student_id = ? AND sa.subject_id = ?;";
 
 //Запит на вибірку даних студента (себе)
 pub static STUDENT_PERSONAL_DATA: &str = 
@@ -94,7 +92,7 @@ pub static STUDENT_PERSONAL_DATA: &str =
         students st
     INNER JOIN 
         users u ON st.email=u.email
-    WHERE u.email = '?';";
+    WHERE u.email = ?;";
 
 //Вибрати дані всіх завдань за дисципліною з балами заробленими певним студентом
 pub static STUDENT_TASKS: &str = 
@@ -109,7 +107,7 @@ pub static STUDENT_TASKS: &str =
         assignments a
     LEFT JOIN 
         assignments_marks am ON am.assignment_id = a.id
-    WHERE am.student_id = '?' AND am.subject_id = ?;";
+    WHERE am.student_id = ? AND am.subject_id = ? ;";
 
 //Вибрати всі зайняття за дисципліною та записи їх відвідування певним студентом
 pub static STUDENT_MEETINGS: &str = 
@@ -122,7 +120,7 @@ pub static STUDENT_MEETINGS: &str =
         meetings m
     LEFT JOIN 
         attended_meetings am ON am.meeting_id = m.id
-    WHERE am.student_id = '?' AND am.subject_id = ?;";  
+    WHERE am.student_id = ? AND am.subject_id = ?;";  
 
 
 
@@ -138,7 +136,7 @@ pub static TEACHER_TAUGHT_DISCIPLINES: &str =
         sb.semestr
     FROM 
         subjects sb
-    WHERE sb.teacher_id = '?';";
+    WHERE sb.teacher_id = ?;";
 
 //Запит на вибірку даних викладача (себе)
 pub static TEACHER_PERSONAL_DATA: &str = 
@@ -152,7 +150,7 @@ pub static TEACHER_PERSONAL_DATA: &str =
         teachers t
     INNER JOIN 
         users u ON t.email=u.email
-    WHERE u.email = '?';";
+    WHERE u.email = ?;";
 
 //Запит на вибірку даних всіх студентів за дисципліною 
 pub static TEACHER_STUDENTS_OF_DESCIPLINE: &str = 
@@ -169,7 +167,7 @@ pub static TEACHER_STUDENTS_OF_DESCIPLINE: &str =
         users u ON s.email = u.email
     INNER JOIN 
         subjects sb ON sb.id = sa.subject_id 
-    WHERE sb.teacher_id = '?' AND sa.subject_id = ?;";
+    WHERE sb.teacher_id = ? AND sa.subject_id = ?;";
 
 //Вибрати дані всіх завдань за дисципліною 
 pub static TEACHER_STUDENTS_TASKS_PER_DESCIPLINE: &str = 
@@ -183,7 +181,7 @@ pub static TEACHER_STUDENTS_TASKS_PER_DESCIPLINE: &str =
         assignments a
     INNER JOIN 
         subjects sb ON a.subject_id = sb.id
-    WHERE sb.teacher_id = '?' AND sb.id = ?;";
+    WHERE sb.teacher_id = ? AND sb.id = ?;";
 
 //Вибрати дані з балами заробленими всіма студентами
 pub static TEACHER_STUDENTS_MARKS_PER_DESCIPLINE: &str = 
@@ -205,7 +203,7 @@ pub static TEACHER_STUDENTS_MARKS_PER_DESCIPLINE: &str =
         students s ON sa.student_id = s.email
     INNER JOIN 
         users u ON u.email = s.email
-    WHERE sb.teacher_id = '?' AND sb.id = ?;";
+    WHERE sb.teacher_id = ? AND sb.id = ?;";
 
 
 //Вибрати всі зайняття за дисципліною 
@@ -218,7 +216,7 @@ pub static TEACHER_STUDENTS_MEETINGS_PER_DESCIPLINE: &str =
         meetings m a
     INNER JOIN 
         subjects sb ON m.subject_id = sb.id
-    WHERE sb.teacher_id = '?' AND sb.id = ?;";
+    WHERE sb.teacher_id = ? AND sb.id = ?;";
 
 //Вибрати записи відвідування зайнять всіма студентами за дисципліною
 pub static TEACHER_STUDENTS_ATTENDANCE_PER_DESCIPLINE: &str = 
@@ -240,7 +238,7 @@ pub static TEACHER_STUDENTS_ATTENDANCE_PER_DESCIPLINE: &str =
         students s ON sa.student_id = s.email
     INNER JOIN 
         users u ON u.email = s.email
-    WHERE sb.teacher_id = '?' AND sb.id = ?;";
+    WHERE sb.teacher_id = ? AND sb.id = ?;";
 
 
 // Запит на вибірку максимального відсотка відвіданих занять усіх студентів дисципліни
@@ -254,19 +252,19 @@ pub static TEACHER_STUDENTS_ATTENDANCE_PER_DESCIPLINE: &str =
 // Створення запису про відвідування певного зайняття певним студентом
 pub static TEACHER_ADD_ATTENDANCE: &str = 
     "INSERT INTO attended_meetings (meeting_id, student_id, subject_id, percentage)
-    VALUES (?, '?', ?, ?);";
+    VALUES (?, ?, ?, ?);";
 
 //Створення запису про оцінку певного студента за певним завданням
 pub static TEACHER_ADD_MARK: &str = 
     "INSERT INTO assignments_marks (assignment_id, student_id, subject_id, mark)
-    VALUES (?, '?', ?, ?);";
+    VALUES (?, ?, ?, ?);";
 
 //Редагування запису про відвідування певного зайняття певним студентом
 pub static TEACHER_UPDATE_ATTENDANCE: &str =
     "UPDATE attended_meetings
     SET percentage = ?
     WHERE meeting_id = ?
-    AND student_id = '?'
+    AND student_id = ?
     AND subject_id = ?;";
 
 //Редагування запису про оцінку певного студента за певним завданням
@@ -274,20 +272,20 @@ pub static TEACHER_UPDATE_MARK: &str =
     "UPDATE assignments_marks
     SET mark = ?
     WHERE assignment_id = ?
-    AND student_id = '?'
+    AND student_id = ?
     AND subject_id = ?;";
 
 //Видалення запису про відвідування певного зайняття певним студентом
 pub static TEACHER_DELETE_ATTENDANCE: &str =
     "DELETE FROM attended_meetings
     WHERE meeting_id = ?
-    AND student_id = '?'
+    AND student_id = ?
     AND subject_id = ?;";
 //Видалення запису про оцінку певного студента за певним завданням
 pub static TEACHER_DELETE_MARK: &str = 
     "DELETE FROM assignments_marks
     WHERE assignment_id = ?
-    AND student_id = '?'
+    AND student_id = ?
     AND subject_id = ?;";
 
 //------------------------------------------- ADMIN --------------------------------------------//

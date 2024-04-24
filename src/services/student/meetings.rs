@@ -6,14 +6,13 @@ use sqlx::{mysql::MySql,Pool};
 
 
 
-#[get("/subjects")]
-pub async fn get_student_subjects(req: HttpRequest,pool: web::Data<Arc<Pool<MySql>>>)-> impl Responder {
+#[get("/meetings")]
+pub async fn get_student_meetings(req: HttpRequest,pool: web::Data<Arc<Pool<MySql>>>,query: web::Query<StudentSubjectQuery>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
         None => return HttpResponse::InternalServerError().finish()
     };
-
 
     let mut transaction = match pool.begin().await{
         Ok(dat)=> dat,
@@ -23,27 +22,25 @@ pub async fn get_student_subjects(req: HttpRequest,pool: web::Data<Arc<Pool<MySq
     _ = sqlx::query(templates::SET_ISOLATION_QUERY)
         .execute(&mut *transaction)
         .await;
-
-    let result = sqlx::query(templates::STUDENT_CHOSEN_DISCIPLINES)
+    
+    let result: Result<Vec<StudentMeetings>, sqlx::Error> = sqlx::query(templates::STUDENT_MEETINGS)
         .bind(account.login.clone())
-        .fetch_all(&mut *transaction)   
+        .bind(query.subject_id)
+        .fetch_all(&mut *transaction)
         .map_ok(|rows|
             rows.iter().map(|row|{
-                let obj: StudentSubjects = sqlx::FromRow::from_row(row).unwrap();
+                let obj: StudentMeetings = sqlx::FromRow::from_row(row).unwrap();
                 obj  
             })
             .collect()
         )
         .await;
-
-    
+   
     if result.is_err(){
         _ = transaction.rollback().await;
         HttpResponse::InternalServerError().finish()
-    
     } else {
         _ = transaction.commit().await;
-        let rows: Vec<StudentSubjects> = result.unwrap();
-        HttpResponse::Ok().json(rows)
-    }
+        HttpResponse::Ok().json(result.unwrap())
+    } 
 }

@@ -1,6 +1,6 @@
 
 use std::sync::Arc;
-use services::student::subjects::get_student_subjects;
+use services::student::{meetings::get_student_meetings, profile::get_student_profile, subjects::get_student_subjects, tasks::get_student_tasks, teachers::get_student_teachers};
 use sqlx::{mysql::{MySql, MySqlPoolOptions},Pool};
 use actix_web::{web,App, HttpServer};
 use dotenv;
@@ -31,19 +31,25 @@ async fn main() -> std::io::Result<()> {
         // .wrap(Logger::default())
         .service(
             web::scope("/api")
-            // .wrap(auth::Authentication::default())
-            // .service(
-            //     web::scope("/teacher")   
-            // )        
+            .wrap(auth::Authentication::default())
+            
+            .service(
+                web::scope("/teacher")
+                   
+            )        
             .service(
                 web::scope("/student")   
                 .service(get_student_subjects)
+                .service(get_student_profile)
+                .service(get_student_tasks)
+                .service(get_student_meetings)
+                .service(get_student_teachers)
             )
             // .service(
             //     web::scope("/admin")
             // )
-        )        
-        .service(Auth::login)
+        )
+        .service(Auth::login)        
     })
     .bind("127.0.0.1:8080")?
     .run()

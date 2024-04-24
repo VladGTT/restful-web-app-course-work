@@ -10,6 +10,7 @@ use sqlx::{prelude::FromRow, types::chrono};
 
 #[derive(Deserialize,Serialize,FromRow)]
 pub struct Account{
+    #[sqlx(rename = "email")]
     pub login: String,
     pub password: String,
     pub role: i32
@@ -56,3 +57,25 @@ pub struct StudentTasks{
     pub max_point: f32
 }
 
+#[derive(Serialize,FromRow)]
+pub struct StudentMeetings{
+    pub id: i32,
+    pub name: String,
+    pub time: chrono::NaiveDateTime,
+    pub attendance: f32
+}
+
+#[derive(Serialize,FromRow)]
+pub struct StudentTeachers{
+    pub firstname: String,
+    pub secondname: String,
+    pub lastname: String,
+    pub occupation: String,
+    pub subject_name: String,
+}
+
+// u.firstname,
+// u.secondname,
+// u.lastname,
+// t.occupation,
+// sb.name
