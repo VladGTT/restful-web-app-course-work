@@ -21,14 +21,14 @@ pub async fn get_student_teachers(req: HttpRequest,pool: web::Data<Arc<Pool<MySq
     _ = sqlx::query(templates::SET_ISOLATION_QUERY)
         .execute(&mut *transaction)
         .await;
+    
     let result: Result<Vec<StudentTeachers>, sqlx::Error> = sqlx::query(templates::STUDENT_TEACHERS)
         .bind(account.login.clone())
         .bind(query.subject_id)
         .fetch_all(&***pool)
         .map_ok(|rows|
             rows.iter().map(|row|{
-                let obj: StudentTeachers = sqlx::FromRow::from_row(row).unwrap();
-                obj
+                sqlx::FromRow::from_row(row).unwrap()
             })
             .collect()
         )

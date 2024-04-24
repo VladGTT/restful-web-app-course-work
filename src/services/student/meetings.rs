@@ -29,8 +29,7 @@ pub async fn get_student_meetings(req: HttpRequest,pool: web::Data<Arc<Pool<MySq
         .fetch_all(&mut *transaction)
         .map_ok(|rows|
             rows.iter().map(|row|{
-                let obj: StudentMeetings = sqlx::FromRow::from_row(row).unwrap();
-                obj  
+                sqlx::FromRow::from_row(row).unwrap()  
             })
             .collect()
         )

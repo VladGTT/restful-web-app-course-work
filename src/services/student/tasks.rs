@@ -22,14 +22,13 @@ pub async fn get_student_tasks(req: HttpRequest,pool: web::Data<Arc<Pool<MySql>>
         .execute(&mut *transaction)
         .await;
 
-    let result = sqlx::query(templates::STUDENT_TASKS)
+    let result: Result<Vec<StudentTasks>, sqlx::Error> = sqlx::query(templates::STUDENT_TASKS)
         .bind(account.login.clone())
         .bind(query.subject_id)
         .fetch_all(&mut *transaction)
         .map_ok(|rows|
             rows.iter().map(|row|{
-                let obj: StudentTasks = sqlx::FromRow::from_row(row).unwrap();
-                obj  
+                sqlx::FromRow::from_row(row).unwrap()
             })
             .collect()
         )
@@ -41,7 +40,6 @@ pub async fn get_student_tasks(req: HttpRequest,pool: web::Data<Arc<Pool<MySql>>
 
     } else {
         _ = transaction.commit().await;
-        let rows: Vec<StudentTasks> = result.unwrap();
-        HttpResponse::Ok().json(rows)
+        HttpResponse::Ok().json(result.unwrap())
     }
 }

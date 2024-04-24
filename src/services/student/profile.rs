@@ -23,12 +23,11 @@ pub async fn get_student_profile(req: HttpRequest,pool: web::Data<Arc<Pool<MySql
         .execute(&mut *transaction)
         .await;
     
-    let result = sqlx::query(templates::STUDENT_PERSONAL_DATA)
+    let result:Result<StudentProfileData, sqlx::Error> = sqlx::query(templates::STUDENT_PERSONAL_DATA)
         .bind(account.login.clone())
         .fetch_one(&mut *transaction)
         .map_ok(|row|{
-            let obj: StudentProfileData = sqlx::FromRow::from_row(&row).unwrap();
-            obj  
+            sqlx::FromRow::from_row(&row).unwrap()  
         })
         .await;
     
