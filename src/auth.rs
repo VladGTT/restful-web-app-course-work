@@ -118,3 +118,79 @@ where
         })
     }
 }
+
+
+
+pub struct RoleValidation{
+    role_id: i32
+}
+
+impl RoleValidation {
+    pub fn new(role: i32)->Self{
+        RoleValidation{role_id: role}
+    }   
+}
+impl<S, B> Transform<S, ServiceRequest> for RoleValidation
+where
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S::Future: 'static,
+    B: 'static,
+{
+    type Response = ServiceResponse<EitherBody<B>>; // update here
+    type Error = Error;
+    type InitError = ();
+    type Transform = RoleValidationMiddleware<S>;
+    type Future = Ready<Result<Self::Transform, Self::InitError>>;
+ 
+    fn new_transform(&self, service: S) -> Self::Future {
+        ready(Ok(RoleValidationMiddleware { service: service,role_id: self.role_id }))
+    }
+}
+
+
+pub struct RoleValidationMiddleware<S> {
+    service: S,
+    role_id: i32,
+}
+
+impl<S, B> Service<ServiceRequest> for RoleValidationMiddleware<S>
+where
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S::Future: 'static,
+    B: 'static,
+{
+    type Response = ServiceResponse<EitherBody<B>>; // update here
+    type Error = Error;
+    type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
+ 
+    forward_ready!(service);
+ 
+    fn call(&self, req: ServiceRequest) -> Self::Future {
+        let result = {
+            let ext = req.extensions();
+            let data = ext.get::<Account>().unwrap();
+
+            if data.role == self.role_id{
+                Ok(())
+            } else {
+                Err(())
+            }
+        };
+
+        match result {
+            Ok(_)=>{
+                let fut = self.service.call(req);
+                Box::pin(async move {
+                    let res = fut.await?;                                  
+                    Ok(res.map_into_left_body())
+                })
+            }
+            Err(_) =>{
+                let http_res = HttpResponse::Unauthorized().finish();
+                let (http_req, _) = req.into_parts();
+                let res = ServiceResponse::new(http_req, http_res);
+                (async move { Ok(res.map_into_right_body()) }).boxed_local()
+            }
+        } 
+    }
+}

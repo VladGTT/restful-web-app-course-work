@@ -35,6 +35,7 @@ async fn main() -> std::io::Result<()> {
             
             .service(
                 web::scope("/teacher")
+                .wrap(auth::RoleValidation::new(1))
                 .service(get_teacher_attendance)
                 .service(get_teacher_marks)
                 .service(get_teacher_meetings)
@@ -45,6 +46,7 @@ async fn main() -> std::io::Result<()> {
             )        
             .service(
                 web::scope("/student")   
+                .wrap(auth::RoleValidation::new(2))
                 .service(get_student_subjects)
                 .service(get_student_profile)
                 .service(get_student_tasks)
