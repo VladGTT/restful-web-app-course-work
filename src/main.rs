@@ -1,6 +1,6 @@
 
 use std::sync::Arc;
-use services::student::{meetings::get_student_meetings, profile::get_student_profile, subjects::get_student_subjects, tasks::get_student_tasks, teachers::get_student_teachers};
+use services::{student::{meetings::get_student_meetings, profile::get_student_profile, subjects::get_student_subjects, tasks::get_student_tasks, teachers::get_student_teachers}, teacher::{attendance::get_teacher_attendance, marks::get_teacher_marks, meetings::get_teacher_meetings, profile::get_teacher_profile, students::get_teacher_students, subjects::get_teacher_subjects, tasks::get_teacher_tasks}};
 use sqlx::{mysql::{MySql, MySqlPoolOptions},Pool};
 use actix_web::{web,App, HttpServer};
 use dotenv;
@@ -35,7 +35,13 @@ async fn main() -> std::io::Result<()> {
             
             .service(
                 web::scope("/teacher")
-                   
+                .service(get_teacher_attendance)
+                .service(get_teacher_marks)
+                .service(get_teacher_meetings)
+                .service(get_teacher_profile)
+                .service(get_teacher_subjects)
+                .service(get_teacher_students)
+                .service(get_teacher_tasks)
             )        
             .service(
                 web::scope("/student")   

@@ -22,7 +22,7 @@ pub struct AuthorizationToken{
 }
 
 
-// ------------------------------- STUDENTS ------------------------------------//
+// ------------------------------- STUDENTS ------------------------------------ //
 #[derive(Serialize,FromRow)]
 pub struct StudentSubjects{
     pub id: i32,
@@ -74,8 +74,69 @@ pub struct StudentTeachers{
     pub subject_name: String,
 }
 
-// u.firstname,
-// u.secondname,
-// u.lastname,
-// t.occupation,
-// sb.name
+// --------------------------------- TEACHER ---------------------------------- //
+#[derive(Deserialize)]
+pub struct TeacherSubjectQuery{
+    pub subject_id: i32
+}
+
+#[derive(Serialize,FromRow)]
+pub struct TeacherStudents{
+    pub firstname: String,
+    pub secondname: String,
+    pub lastname: String,
+    pub group: String,
+}
+
+#[derive(Serialize,FromRow)]
+pub struct TeacherSubjects{
+    pub id: i32,
+    pub name: String,
+    pub description: String,
+    pub semestr: i32,
+} 
+
+#[derive(Serialize,FromRow)]
+pub struct TeacherProfileData{
+    pub email: String,
+    pub firstname: String,
+    pub secondname: String,
+    pub lastname: String,
+    pub occupation: String
+}
+
+#[derive(Serialize,FromRow)]
+pub struct TeacherTasks{
+    pub id: i32,
+    pub name: String,
+    pub description: String,
+    pub due_to: chrono::NaiveDateTime,
+    pub max_point: f32
+}
+
+#[derive(Serialize,FromRow)]
+pub struct TeacherMeetings{
+    pub id: i32,
+    pub name: String,
+    pub time: chrono::NaiveDateTime
+}
+
+#[derive(Serialize,FromRow)]
+pub struct TeacherMarks{
+    pub firstname: String,
+    pub secondname: String,
+    pub lastname: String,
+    #[sqlx(rename = "name")]
+    pub assignment_name: String,
+    pub mark: f32
+}
+
+#[derive(Serialize,FromRow)]
+pub struct TeacherAttendance{
+    pub firstname: String,
+    pub secondname: String,
+    pub lastname: String,
+    #[sqlx(rename = "name")]
+    pub meeting_name: String,
+    pub percentage: f32
+}

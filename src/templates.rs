@@ -170,7 +170,7 @@ pub static TEACHER_STUDENTS_OF_DESCIPLINE: &str =
     WHERE sb.teacher_id = ? AND sa.subject_id = ?;";
 
 //Вибрати дані всіх завдань за дисципліною 
-pub static TEACHER_STUDENTS_TASKS_PER_DESCIPLINE: &str = 
+pub static TEACHER_TASKS_PER_DESCIPLINE: &str = 
     "SELECT
         a.id,
         a.name,
@@ -184,7 +184,7 @@ pub static TEACHER_STUDENTS_TASKS_PER_DESCIPLINE: &str =
     WHERE sb.teacher_id = ? AND sb.id = ?;";
 
 //Вибрати дані з балами заробленими всіма студентами
-pub static TEACHER_STUDENTS_MARKS_PER_DESCIPLINE: &str = 
+pub static TEACHER_MARKS_PER_DESCIPLINE: &str = 
     "SELECT 
         u.firstname,
         u.secondname,
@@ -207,7 +207,7 @@ pub static TEACHER_STUDENTS_MARKS_PER_DESCIPLINE: &str =
 
 
 //Вибрати всі зайняття за дисципліною 
-pub static TEACHER_STUDENTS_MEETINGS_PER_DESCIPLINE: &str = 
+pub static TEACHER_MEETINGS_PER_DESCIPLINE: &str = 
     "SELECT
         a.id,
         a.name,
@@ -219,7 +219,7 @@ pub static TEACHER_STUDENTS_MEETINGS_PER_DESCIPLINE: &str =
     WHERE sb.teacher_id = ? AND sb.id = ?;";
 
 //Вибрати записи відвідування зайнять всіма студентами за дисципліною
-pub static TEACHER_STUDENTS_ATTENDANCE_PER_DESCIPLINE: &str = 
+pub static TEACHER_ATTENDANCE_PER_DESCIPLINE: &str = 
     "SELECT 
         u.firstname,
         u.secondname,
