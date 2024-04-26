@@ -1,12 +1,13 @@
 
 use std::sync::Arc;
-use services::{student::{meetings::get_student_meetings, profile::get_student_profile, subjects::get_student_subjects, tasks::get_student_tasks, teachers::get_student_teachers}, teacher::{attendance::get_teacher_attendance, marks::get_teacher_marks, meetings::get_teacher_meetings, profile::get_teacher_profile, students::get_teacher_students, subjects::get_teacher_subjects, tasks::get_teacher_tasks}};
+use services::{student::{meetings::get_student_meetings, profile::get_student_profile, subjects::get_student_subjects, tasks::get_student_tasks, teachers::get_student_teachers}, teacher::{attendance::{delete_teacher_attendance, get_teacher_attendance, post_teacher_attendance, put_teacher_attendance}, marks::{delete_teacher_marks, get_teacher_marks, post_teacher_marks, put_teacher_marks}, meetings::get_teacher_meetings, profile::get_teacher_profile, students::get_teacher_students, subjects::get_teacher_subjects, tasks::get_teacher_tasks}};
 use sqlx::{mysql::{MySql, MySqlPoolOptions},Pool};
 use actix_web::{web,App, HttpServer};
 use dotenv;
 use crate::services::auth as Auth;
 
 mod auth;
+mod valid;
 mod services;
 mod models;
 mod templates;
@@ -31,13 +32,18 @@ async fn main() -> std::io::Result<()> {
         // .wrap(Logger::default())
         .service(
             web::scope("/api")
-            .wrap(auth::Authentication::default())
             
             .service(
                 web::scope("/teacher")
-                .wrap(auth::RoleValidation::new(1))
+                .wrap(auth::Authentication::new(1))
                 .service(get_teacher_attendance)
+                .service(post_teacher_attendance)
+                .service(put_teacher_attendance)
+                .service(delete_teacher_attendance)
                 .service(get_teacher_marks)
+                .service(post_teacher_marks)
+                .service(put_teacher_marks)
+                .service(delete_teacher_marks)
                 .service(get_teacher_meetings)
                 .service(get_teacher_profile)
                 .service(get_teacher_subjects)
@@ -46,7 +52,7 @@ async fn main() -> std::io::Result<()> {
             )        
             .service(
                 web::scope("/student")   
-                .wrap(auth::RoleValidation::new(2))
+                .wrap(auth::Authentication::new(2))
                 .service(get_student_subjects)
                 .service(get_student_profile)
                 .service(get_student_tasks)

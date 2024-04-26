@@ -255,12 +255,12 @@ pub static TEACHER_ATTENDANCE_PER_DESCIPLINE: &str =
 // Створення запису про відвідування певного зайняття певним студентом
 pub static TEACHER_ADD_ATTENDANCE: &str = 
     "INSERT INTO attended_meetings (meeting_id, student_id, subject_id, percentage)
-    VALUES (?, ?, ?, ?)";
+    VALUES (?, ?, (SELECT id FROM subjects WHERE id = ? AND teacher_id = ?), ?)";
 
 //Створення запису про оцінку певного студента за певним завданням
 pub static TEACHER_ADD_MARK: &str = 
     "INSERT INTO assignments_marks (assignment_id, student_id, subject_id, mark)
-    VALUES (?, ?, ?, ?)";
+    VALUES (?, ?, (SELECT id FROM subjects WHERE id = ? AND teacher_id = ?), ?)";
 
 //Редагування запису про відвідування певного зайняття певним студентом
 pub static TEACHER_UPDATE_ATTENDANCE: &str =
@@ -268,7 +268,7 @@ pub static TEACHER_UPDATE_ATTENDANCE: &str =
     SET percentage = ?
     WHERE meeting_id = ?
     AND student_id = ?
-    AND subject_id = ?";
+    AND subject_id = (SELECT id FROM subjects WHERE id = ? AND teacher_id = ?)";
 
 //Редагування запису про оцінку певного студента за певним завданням
 pub static TEACHER_UPDATE_MARK: &str = 
@@ -276,19 +276,19 @@ pub static TEACHER_UPDATE_MARK: &str =
     SET mark = ?
     WHERE assignment_id = ?
     AND student_id = ?
-    AND subject_id = ?";
+    AND subject_id = (SELECT id FROM subjects WHERE id = ? AND teacher_id = ?)";
 
 //Видалення запису про відвідування певного зайняття певним студентом
 pub static TEACHER_DELETE_ATTENDANCE: &str =
     "DELETE FROM attended_meetings
     WHERE meeting_id = ?
     AND student_id = ?
-    AND subject_id = ?";
+    AND subject_id = (SELECT id FROM subjects WHERE id = ? AND teacher_id = ?)";
 //Видалення запису про оцінку певного студента за певним завданням
 pub static TEACHER_DELETE_MARK: &str = 
     "DELETE FROM assignments_marks
     WHERE assignment_id = ?
     AND student_id = ?
-    AND subject_id = ?";
+    AND subject_id = (SELECT id FROM subjects WHERE id = ? AND teacher_id = ?)";
 
 //------------------------------------------- ADMIN --------------------------------------------//

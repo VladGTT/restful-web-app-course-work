@@ -1,18 +1,40 @@
 
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, types::chrono};
+use validator::Validate;
+use crate::valid::validate_password;
 
+//---------------------------------- ACTOR-ABSTRACT ------------------------------------//
+#[derive(Deserialize,Validate)]
+pub struct Attendance{
+    pub meeting_id: i32,
+    #[validate(email)]
+    pub student_id: String,
+    pub subject_id: i32,
+    pub percentage: f32
+}
 
+#[derive(Deserialize,Validate)]
+pub struct Mark{
+    pub assignment_id: i32,
+    #[validate(email)]
+    pub student_id: String, 
+    pub subject_id: i32, 
+    pub mark: f32
+}
 
 
 
 //---------------------------------- AUTH ------------------------------------//
 
-#[derive(Deserialize,Serialize,FromRow)]
+#[derive(Deserialize,Serialize,FromRow,Validate)]
 pub struct Account{
+    #[validate(email)]
     #[sqlx(rename = "email")]
     pub login: String,
+    #[validate(custom(function = "validate_password"))]
     pub password: String,
+    #[validate(range(min = 0, max = 3))]
     pub role: i32
 }
 

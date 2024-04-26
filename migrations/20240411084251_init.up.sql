@@ -112,7 +112,7 @@ ALTER TABLE `students` ADD FOREIGN KEY (`email`) REFERENCES `users` (`email`);
 
 
 
--- ----------------------------------- POPULATIN DB WITH DATA ----------------------------- --
+-- ----------------------------------- POPULATE DB WITH DATA ----------------------------- --
 
 -- Populate `accounts` table
 INSERT INTO `accounts` (`email`, `password`, `role`) VALUES
