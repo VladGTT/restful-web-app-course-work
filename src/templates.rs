@@ -53,7 +53,7 @@ pub static STUDENT_CHOSEN_DISCIPLINES: &str =
         sb.name,
         sb.description,
         sb.semestr,
-        u.firstname || u.secondname || u.lastname AS teacher,
+        CONCAT_WS (' ',u.firstname,u.secondname,u.lastname) AS teacher,
         t.occupation 
     FROM 
         subjects sb
@@ -292,3 +292,242 @@ pub static TEACHER_DELETE_MARK: &str =
     AND subject_id = (SELECT id FROM subjects WHERE id = ? AND teacher_id = ?)";
 
 //------------------------------------------- ADMIN --------------------------------------------//
+
+//Запит на вибірку даних всіх викладачів
+pub static ADMIN_TEACHERS_DATA: &str = 
+    "SELECT 
+        u.email,
+        u.firstname,
+        u.secondname,
+        u.lastname,
+        t.occupation
+    FROM 
+        teachers t
+    INNER JOIN 
+        users u ON t.email=u.email";
+
+
+//Запит на вибірку даних всіх студентів (students)
+pub static ADMIN_STUDENTS_DATA: &str = 
+    "SELECT
+        u.firstname,
+        u.secondname,
+        u.lastname,
+        s.group
+    FROM 
+        students s
+    INNER JOIN 
+        users u ON s.email = u.email";
+
+//Запит на вибірку даних всіх студентів (students-attendies)
+pub static ADMIN_SUBJECTS_ATTENDIES_DATA: &str = 
+    "SELECT
+        CONCAT_WS (' ',u.firstname, u.secondname, u.lastname) as student_fullname,
+        s.group
+    FROM 
+        subjects_attendies sa
+    LEFT JOIN 
+        students s ON s.email = sa.student_id     
+    LEFT JOIN 
+        subjects sb ON sb.id = sa.subject_id         
+    INNER JOIN 
+        users u ON s.email = u.email";
+
+
+//Запит на вибірку даних всіх предметів
+pub static ADMIN_SUBJECTS: &str =
+    "SELECT 
+        sb.id,
+        sb.name,
+        sb.description,
+        sb.semestr,
+        CONCAT_WS (' ',u.firstname,u.secondname,u.lastname) AS teacher,
+        t.occupation 
+    FROM 
+        subjects sb
+    INNER JOIN
+        teachers t ON t.email = sb.teacher_id
+    INNER JOIN
+        users u ON t.email = u.email";
+//Вибрати дані всіх завдань за всіма дисциплінами
+pub static ADMIN_TASKS: &str =
+    "SELECT
+        a.id,
+        a.name,
+        sb.name as subject_name,
+        
+        a.description,
+        a.due_to,
+        a.max_point
+    FROM 
+        assignments a
+    INNER JOIN 
+        subjects sb ON a.subject_id = sb.id";
+
+//Вибрати дані з балами заробленими всіма студентами
+pub static ADMIN_MARKS: &str =
+    "SELECT 
+        u.firstname,
+        u.secondname,
+        u.lastname,
+        sb.name as subject_name,
+        a.name as assignment_name,
+        am.mark,
+        a.max_point 
+    FROM
+        assignments_marks am
+    RIGHT JOIN 
+        assignments a ON a.id = am.assignment_id
+    INNER JOIN 
+        subjects sb ON sb.id = a.subject_id
+    INNER JOIN
+        subjects_attendies sa ON sa.student_id=am.student_id AND sa.subject_id=am.subject_id 
+    INNER JOIN
+        students s ON sa.student_id = s.email
+    INNER JOIN 
+        users u ON u.email = s.email";
+
+//Вибрати всі зайняття за всіма дисциплінами 
+pub static ADMIN_MEETINGS: &str =
+    "SELECT
+        m.id,
+        m.name,
+        sb.name AS subject_name,
+        m.time
+    FROM
+        meetings m
+    INNER JOIN 
+        subjects sb ON m.subject_id = sb.id"; 
+//Вибрати всі записи їх відвідування занять всіма студентами
+pub static ADMIN_ATTENDANCE: &str =
+    "SELECT 
+        u.firstname,
+        u.secondname,
+        u.lastname,
+        sb.name as subject_name,
+        m.name as meeting_name,
+        am.percentage
+    FROM
+        attended_meetings am
+    RIGHT JOIN 
+        meetings m ON m.id = am.meeting_id
+    INNER JOIN 
+        subjects sb ON sb.id = m.subject_id
+    INNER JOIN
+        subjects_attendies sa ON sa.student_id=am.student_id AND sa.subject_id=am.subject_id 
+    INNER JOIN
+        students s ON sa.student_id = s.email
+    INNER JOIN 
+        users u ON u.email = s.email";
+
+
+
+// Створення запису про відвідування певного зайняття певним студентом
+pub static ADMIN_ADD_ATTENDANCE: &str = 
+    "INSERT INTO attended_meetings (meeting_id, student_id, subject_id, percentage)
+    VALUES (?, ?, ?, ?)";
+
+//Створення запису про оцінку певного студента за певним завданням
+pub static ADMIN_ADD_MARK: &str = 
+    "INSERT INTO assignments_marks (assignment_id, student_id, subject_id, mark)
+    VALUES (?, ?, ?, ?)";
+
+//Редагування запису про відвідування певного зайняття певним студентом
+pub static ADMIN_UPDATE_ATTENDANCE: &str =
+    "UPDATE attended_meetings
+    SET percentage = ?
+    WHERE meeting_id = ?
+    AND student_id = ?
+    AND subject_id = ?";
+
+//Редагування запису про оцінку певного студента за певним завданням
+pub static ADMIN_UPDATE_MARK: &str = 
+    "UPDATE assignments_marks
+    SET mark = ?
+    WHERE assignment_id = ?
+    AND student_id = ?
+    AND subject_id = ?";
+
+//Видалення запису про відвідування певного зайняття певним студентом
+pub static ADMIN_DELETE_ATTENDANCE: &str =
+    "DELETE FROM attended_meetings
+    WHERE meeting_id = ?
+    AND student_id = ?
+    AND subject_id = ?";
+//Видалення запису про оцінку певного студента за певним завданням
+pub static ADMIN_DELETE_MARK: &str = 
+    "DELETE FROM assignments_marks
+    WHERE assignment_id = ?
+    AND student_id = ?
+    AND subject_id = ?";
+
+
+
+
+//  Додавання дисциплін
+pub static ADMIN_ADD_SUBJECT: &str = 
+    "INSERT INTO subjects (name, description, semestr, teacher_id)
+    VALUES (?, ?, ?, ?)";
+
+// 5.2а Додавання даних студентів
+pub static ADMIN_ADD_STUDENT: &str = 
+    "";
+
+// 5.2б Додавання даних студентів (Записи на предмети)
+pub static ADMIN_ADD_SUBJECT_ATTENDIE: &str = 
+    "INSERT INTO subjects_attendies (student_id, subject_id)
+    VALUES (?, ?)";
+
+// 5.3 Додавання даних викладачів
+pub static ADMIN_ADD_TEACHER: &str = 
+    "";
+
+// 5.4 Додавання занять по дисциплінам
+pub static ADMIN_ADD_MEETING: &str = 
+    "INSERT INTO meetings (subject_id, name, time)
+    VALUES (?, ?, ?)";
+
+// 5.5 Додавання завдань по дисциплінам
+pub static ADMIN_ADD_TASK: &str = 
+    "INSERT INTO assignments (subject_id, name, description, due_to, max_point)
+    VALUES (?, ?, ?, ?, ?)";
+
+
+
+//Редагування дисциплін
+pub static ADMIN_UPDATE_SUBJECT: &str = "";
+
+//Редагування даних студентів
+pub static ADMIN_UPDATE_STUDENT: &str = "";
+
+//Редагування даних студентів (Записи на предмети)
+pub static ADMIN_UPDATE_SUBJECT_ATTENDIE: &str = "";
+
+//Редагування даних викладачів
+pub static ADMIN_UPDATE_TEACHER: &str = "";
+
+//Редагування занять по дисциплінам
+pub static ADMIN_UPDATE_MEETING: &str = "";
+
+//Редагування завдань по дисциплінам
+pub static ADMIN_UPDATE_TASK: &str = "";
+
+
+
+// 5.11 Видалення дисциплін
+pub static ADMIN_DELETE_SUBJECT: &str = "";
+
+// 5.12 Видалення даних студентів
+pub static ADMIN_DELETE_STUDENT: &str = "";
+
+// 5.12 Видалення даних студентів (Записи на предмети)
+pub static ADMIN_DELETE_SUBJECT_ATTENDIE: &str = "";
+
+// 5.13 Видалення даних викладачів
+pub static ADMIN_DELETE_TEACHER: &str = "";
+
+// 5.14 Видалення занять по дисциплінам
+pub static ADMIN_DELETE_MEETING: &str = "";
+
+// 5.15 Видалення завдань по дисциплінам
+pub static ADMIN_DELETE_TASK: &str = "";
