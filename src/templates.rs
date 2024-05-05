@@ -1,5 +1,4 @@
-pub static GET_ACCOUNT_QUERY: &str = "SELECT email, password, role FROM accounts WHERE email = ?";  
-pub static SET_ISOLATION_QUERY: &str = "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE";
+
 
 //------------------------------------------- STUDENT --------------------------------------------//
 

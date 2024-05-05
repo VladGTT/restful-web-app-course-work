@@ -11,7 +11,10 @@ dotenv = "0.15.0"
 futures-util = "0.3.30"
 jwt-simple = "0.12.9"
 serde = "1.0.197"
-sqlx = {version = "0.7.4", features = ["mysql","chrono","runtime-async-std"]}
 chrono = {version = "0.4.34", features = ["serde"]}
 validator = { version = "0.17", features = ["derive"] }
 regex = "1.10.4"
+
+sea-orm = { version = "0.12", features = [ "sqlx-mysql","runtime-tokio-rustls", "macros"] }
+sea-query = { version = "0.30.7", features = ["derive"] }
+futures = "0.3.30"

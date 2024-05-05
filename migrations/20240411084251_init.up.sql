@@ -3,7 +3,7 @@
 -- DROP TABLE IF EXISTS `logs`;
 CREATE TABLE IF NOT EXISTS `logs` (
   `id` int UNIQUE PRIMARY KEY NOT NULL AUTO_INCREMENT,
-  `time` timestamp NOT NULL,
+  `time` datetime NOT NULL,
   `description` text NOT NULL
 );
 
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS `subjects` (
   `name` varchar(255) NOT NULL,
   `description` text NOT NULL,
   `semestr` int,
-  `teacher_id` varchar(255) NOT NULL
+  `teacher_id` varchar(255)
 );
 
 -- DROP TABLE IF EXISTS `assignments`;

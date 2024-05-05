@@ -1,7 +1,5 @@
-use crate::{models::*, templates};
-use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
-use std::sync::Arc;
-use sqlx::{mysql::MySql,Pool};
+// use crate::models::*;
+// use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 
 
 // #[get("/stats")]

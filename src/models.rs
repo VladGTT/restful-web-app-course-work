@@ -1,6 +1,6 @@
 
+use sea_orm::FromQueryResult;
 use serde::{Deserialize, Serialize};
-use sqlx::{prelude::FromRow, types::chrono};
 use validator::Validate;
 use crate::valid::validate_password;
 
@@ -27,10 +27,10 @@ pub struct Mark{
 
 //---------------------------------- AUTH ------------------------------------//
 
-#[derive(Deserialize,Serialize,FromRow,Validate)]
+#[derive(Deserialize,Serialize,Validate,FromQueryResult)]
 pub struct Account{
     #[validate(email)]
-    #[sqlx(rename = "email")]
+    // #[sqlx(rename = "email")]
     pub login: String,
     #[validate(custom(function = "validate_password"))]
     pub password: String,
@@ -45,7 +45,7 @@ pub struct AuthorizationToken{
 
 
 // ------------------------------- STUDENTS ------------------------------------ //
-#[derive(Serialize,FromRow)]
+#[derive(Serialize,FromQueryResult)]
 pub struct StudentSubjects{
     pub id: i32,
     pub name: String,
@@ -55,7 +55,7 @@ pub struct StudentSubjects{
     pub occupation: String
 }  
 
-#[derive(Serialize,FromRow)]
+#[derive(Serialize,FromQueryResult)]
 pub struct StudentProfileData{
     pub email: String,
     pub firstname: String,
@@ -69,7 +69,7 @@ pub struct StudentSubjectQuery{
     pub subject_id: i32
 }
 
-#[derive(Serialize,FromRow)]
+#[derive(Serialize,FromQueryResult)]
 pub struct StudentTasks{
     pub id: i32,
     pub name: String,
@@ -79,7 +79,7 @@ pub struct StudentTasks{
     pub max_point: f32
 }
 
-#[derive(Serialize,FromRow)]
+#[derive(Serialize,FromQueryResult)]
 pub struct StudentMeetings{
     pub id: i32,
     pub name: String,
@@ -87,7 +87,7 @@ pub struct StudentMeetings{
     pub attendance: f32
 }
 
-#[derive(Serialize,FromRow)]
+#[derive(Serialize,FromQueryResult)]
 pub struct StudentTeachers{
     pub firstname: String,
     pub secondname: String,
@@ -102,7 +102,7 @@ pub struct TeacherSubjectQuery{
     pub subject_id: i32
 }
 
-#[derive(Serialize,FromRow)]
+#[derive(Serialize)]
 pub struct TeacherStudents{
     pub firstname: String,
     pub secondname: String,
@@ -110,7 +110,7 @@ pub struct TeacherStudents{
     pub group: String,
 }
 
-#[derive(Serialize,FromRow)]
+#[derive(Serialize)]
 pub struct TeacherSubjects{
     pub id: i32,
     pub name: String,
@@ -118,7 +118,7 @@ pub struct TeacherSubjects{
     pub semestr: i32,
 } 
 
-#[derive(Serialize,FromRow)]
+#[derive(Serialize)]
 pub struct TeacherProfileData{
     pub email: String,
     pub firstname: String,
@@ -127,7 +127,7 @@ pub struct TeacherProfileData{
     pub occupation: String
 }
 
-#[derive(Serialize,FromRow)]
+#[derive(Serialize)]
 pub struct TeacherTasks{
     pub id: i32,
     pub name: String,
@@ -136,29 +136,27 @@ pub struct TeacherTasks{
     pub max_point: f32
 }
 
-#[derive(Serialize,FromRow)]
+#[derive(Serialize)]
 pub struct TeacherMeetings{
     pub id: i32,
     pub name: String,
     pub time: chrono::NaiveDateTime
 }
 
-#[derive(Serialize,FromRow)]
+#[derive(Serialize,FromQueryResult)]
 pub struct TeacherMarks{
     pub firstname: String,
     pub secondname: String,
     pub lastname: String,
-    #[sqlx(rename = "name")]
     pub assignment_name: String,
     pub mark: f32
 }
 
-#[derive(Serialize,FromRow)]
+#[derive(Serialize,FromQueryResult)]
 pub struct TeacherAttendance{
     pub firstname: String,
     pub secondname: String,
     pub lastname: String,
-    #[sqlx(rename = "name")]
     pub meeting_name: String,
     pub percentage: f32
 }

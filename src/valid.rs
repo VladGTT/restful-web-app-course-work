@@ -1,6 +1,5 @@
 use regex::Regex;
-use serde::Deserialize;
-use validator::{Validate, ValidationError};
+use validator::ValidationError;
 // pub static PASSWORD_REGEX: Lazy<Regex> = Lazy::new(||
 //     Regex::new("").unwrap()
 // );
@@ -14,7 +13,4 @@ pub fn validate_password(pass: &String)->Result<(),ValidationError>{
         Err(ValidationError::new("terrible_username"))
     }
 }
-
-
-
 
