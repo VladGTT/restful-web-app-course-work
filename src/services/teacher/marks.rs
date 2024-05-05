@@ -2,7 +2,7 @@ use crate::{entities::{assignments, assignments_marks, prelude, students, subjec
 use actix_web::{get,post,put,delete, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use validator::Validate;
 
-use sea_orm::{query::*, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, Set, TransactionTrait, Unchanged};
+use sea_orm::{query::*, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, Set, TransactionTrait, Unchanged};
 
 
 #[get("/marks")]
@@ -93,13 +93,13 @@ pub async fn post_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnect
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
 
-    let check_result = assignments::Entity::find()
-        .column_as(assignments_marks::Column::Id.count(),"count")
-        .join(JoinType::InnerJoin, subjects::Relation::Meetings.def().rev())
+    let check_result: Result<Option<i32>, sea_orm::prelude::DbErr> = assignments::Entity::find()        
+        .column_as(assignments::Column::Id.count(),"count")
+        .join(JoinType::InnerJoin, subjects::Relation::Assignments.def().rev())
         .join(JoinType::InnerJoin,subjects_attendies::Relation::Subjects.def().rev())
         .filter(
             Condition::all()
-                .add(meetings::Column::Id.eq(data.meeting_id))
+                .add(assignments::Column::Id.eq(data.assignment_id))
                 .add(subjects_attendies::Column::StudentId.eq(data.student_id.clone()))
                 .add(subjects::Column::Id.eq(data.subject_id))
                 .add(subjects::Column::TeacherId.eq(account.login.clone()))
@@ -111,24 +111,24 @@ pub async fn post_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnect
     let new_mark = assignments_marks::ActiveModel{
         assignment_id: Set(data.assignment_id),
         subject_id: Set(data.subject_id),
-        student_id: Set(data.student_id),
-        mark: Set(data.mark)
+        student_id: Set(data.student_id.clone()),
+        mark: Set(Some(data.mark))
+    };
+
+    let insert_result = new_mark.insert(&transaction).await; 
+
+    match insert_result.and(check_result.map(|val|val.filter(|v|*v==1))){
+        Ok(Some(_)) =>{
+            _ = transaction.commit().await;
+            HttpResponse::Ok().finish()        
+        }
+        Ok(None) | Err(_) => HttpResponse::InternalServerError().finish()
     }
-    let insert_result 
-    // let result = sqlx::query(templates::TEACHER_ADD_MARK)
-    //     .bind(data.assignment_id)
-    //     .bind(data.student_id.clone())
-    //     .bind(data.subject_id)
-    //     .bind(account.login.clone())
-    //     .bind(data.mark)
-    //     .execute(&mut *transaction)
-    //     .await;
-    
 
 }
 
 #[put("/marks")]
-pub async fn put_teacher_marks(req: HttpRequest,pool: web::Data<Arc<Pool<MySql>>>,data: web::Json<Mark>)-> impl Responder {
+pub async fn put_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnection>,data: web::Json<Mark>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -143,36 +143,44 @@ pub async fn put_teacher_marks(req: HttpRequest,pool: web::Data<Arc<Pool<MySql>>
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
 
-    let teacher_check = prelude::Subjects::find()
+    let check_result: Result<Option<i32>, sea_orm::prelude::DbErr> = assignments::Entity::find()        
+        .column_as(assignments::Column::Id.count(),"count")
+        .join(JoinType::InnerJoin, subjects::Relation::Assignments.def().rev())
+        .join(JoinType::InnerJoin,subjects_attendies::Relation::Subjects.def().rev())
         .filter(
             Condition::all()
-            .add(subjects::Column::Id.eq(data.subject_id))    
-            .add(subjects::Column::TeacherId.eq(account.login.clone()))    
+                .add(assignments::Column::Id.eq(data.assignment_id))
+                .add(subjects_attendies::Column::StudentId.eq(data.student_id.clone()))
+                .add(subjects::Column::Id.eq(data.subject_id))
+                .add(subjects::Column::TeacherId.eq(account.login.clone()))
         )
-        .all(&transaction)       
+        .into_tuple()
+        .one(&transaction)
         .await;
+    
+    let new_mark = assignments_marks::ActiveModel{
+        assignment_id: Unchanged(data.assignment_id),
+        subject_id: Unchanged(data.subject_id),
+        student_id: Unchanged(data.student_id.clone()),
+        mark: Set(Some(data.mark))
+    };
 
-    // let result = sqlx::query(templates::TEACHER_UPDATE_MARK)
-    //     .bind(data.mark)
-    //     .bind(data.assignment_id)
-    //     .bind(data.student_id.clone())
-    //     .bind(data.subject_id)
-    //     .bind(account.login.clone())
-    //     .execute(&mut *transaction)
-    //     .await;
-    match result{
-        Ok(_) if !(teacher_check.is_ok() && teacher_check.unwrap().is_empty()) =>{
+    let update_result = new_mark.update(&transaction).await;
+
+
+    match update_result.and(check_result.map(|val|val.filter(|v|*v==1))){
+        Ok(Some(_)) =>{
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
-        _ => HttpResponse::InternalServerError().finish()
+        Ok(None) | Err(_) => HttpResponse::InternalServerError().finish()
     }
+
 
 }
 
 #[delete("/marks")]
-pub async fn delete_teacher_marks(req: HttpRequest,pool: web::Data<Arc<Pool<MySql>>>,data: web::Json<Mark>)-> impl Responder {
+pub async fn delete_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnection>,data: web::Json<Mark>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -186,30 +194,36 @@ pub async fn delete_teacher_marks(req: HttpRequest,pool: web::Data<Arc<Pool<MySq
         Ok(dat)=> dat,
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
-
-    let teacher_check = prelude::Subjects::find()
+    let check_result: Result<Option<i32>, sea_orm::prelude::DbErr> = assignments::Entity::find()        
+        .column_as(assignments::Column::Id.count(),"count")
+        .join(JoinType::InnerJoin, subjects::Relation::Assignments.def().rev())
+        .join(JoinType::InnerJoin,subjects_attendies::Relation::Subjects.def().rev())
         .filter(
             Condition::all()
-            .add(subjects::Column::Id.eq(data.subject_id))    
-            .add(subjects::Column::TeacherId.eq(account.login.clone()))    
+                .add(assignments::Column::Id.eq(data.assignment_id))
+                .add(subjects_attendies::Column::StudentId.eq(data.student_id.clone()))
+                .add(subjects::Column::Id.eq(data.subject_id))
+                .add(subjects::Column::TeacherId.eq(account.login.clone()))
         )
-        .all(&transaction)       
+        .into_tuple()
+        .one(&transaction)
         .await;
 
-    
-    // let result = sqlx::query(templates::TEACHER_DELETE_MARK)
-    //     .bind(data.assignment_id)
-    //     .bind(data.student_id.clone())
-    //     .bind(data.subject_id)
-    //     .bind(account.login.clone())
-    //     .execute(&mut *transaction)
-    //     .await;
-    match result{
-        Ok(_) if !(teacher_check.is_ok() && teacher_check.unwrap().is_empty()) =>{
+    let new_mark = assignments_marks::ActiveModel{
+        assignment_id: Unchanged(data.assignment_id),
+        subject_id: Unchanged(data.subject_id),
+        student_id: Unchanged(data.student_id.clone()),
+        mark: Unchanged(Some(data.mark))
+    };
+
+    let delete_result = new_mark.delete(&transaction).await;
+
+
+    match delete_result.and(check_result.map(|val|val.filter(|v|*v==1))){
+        Ok(Some(_)) =>{
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
-        _ => HttpResponse::InternalServerError().finish()
-    }
+        Ok(None) | Err(_) => HttpResponse::InternalServerError().finish()
+    }   
 }

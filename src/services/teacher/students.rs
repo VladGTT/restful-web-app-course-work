@@ -1,43 +1,66 @@
-use crate::{models::*, templates};
+use crate::{entities::{students, subjects, subjects_attendies, users}, models::*};
 use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
-use futures_util::TryFutureExt;
-use std::sync::Arc;
-use sqlx::{mysql::MySql,Pool};
+use sea_orm::{query::*, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, TransactionTrait};
 
 
 
 #[get("/students")]
-pub async fn get_teacher_students(req: HttpRequest,pool: web::Data<Arc<Pool<MySql>>>,query: web::Query<TeacherSubjectQuery>)-> impl Responder {
+pub async fn get_teacher_students(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<TeacherSubjectQuery>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
         None => return HttpResponse::InternalServerError().finish()
     };
-
-    let mut transaction = match pool.begin().await{
+    
+    let transaction = match pool.begin_with_config(Some(sea_orm::IsolationLevel::Serializable), None).await{
         Ok(dat)=> dat,
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
-    _ = sqlx::query(templates::SET_ISOLATION_QUERY)
-        .execute(&mut *transaction)
-        .await;
-    let result: Result<Vec<TeacherStudents>, sqlx::Error> = sqlx::query(templates::TEACHER_STUDENTS_OF_DESCIPLINE)
-        .bind(account.login.clone())
-        .bind(query.subject_id)
-        .fetch_all(&***pool)
-        .map_ok(|rows|
-            rows.iter().map(|row|{
-                sqlx::FromRow::from_row(row).unwrap()
-            })
-            .collect()
+
+    // SELECT
+    //     u.firstname,
+    //     u.secondname,
+    //     u.lastname,
+    //     s.group
+    // FROM 
+    //     subjects_attendies sa
+    // INNER JOIN 
+    //     students s ON s.email = sa.student_id
+    // INNER JOIN 
+    //     users u ON s.email = u.email
+    // INNER JOIN 
+    //     subjects sb ON sb.id = sa.subject_id 
+    // WHERE sb.teacher_id = ? AND sa.subject_id = ?
+
+    
+    let result = subjects_attendies::Entity::find()
+        .select_only()
+        .columns([
+            users::Column::Firstname,
+            users::Column::Secondname,
+            users::Column::Lastname
+        ])
+        .column(students::Column::Group)
+        .join(JoinType::InnerJoin, students::Relation::SubjectsAttendies.def().rev())
+        .join(JoinType::InnerJoin, users::Relation::Students.def().rev())
+        .join(JoinType::InnerJoin, subjects::Relation::SubjectsAttendies.def().rev())
+        .filter(
+            Condition::all()
+                .add(subjects::Column::TeacherId.eq(account.login.clone()))
+                .add(subjects_attendies::Column::SubjectId.eq(query.subject_id))
         )
+        .into_json()
+        .all(&transaction)
         .await;
 
-    if result.is_err(){
-        _ = transaction.rollback().await;
-        HttpResponse::InternalServerError().finish()
-    } else {
-        _ = transaction.commit().await;
-        HttpResponse::Ok().json(result.unwrap())
-    } 
+
+
+
+    match result {
+        Ok(data)=>{
+            _ = transaction.commit().await;
+            HttpResponse::Ok().json(data)        
+        }
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+    }
 }
