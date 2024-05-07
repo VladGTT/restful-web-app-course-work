@@ -1,4 +1,4 @@
-use crate::{entities::{subjects,subjects_attendies,users,teachers,prelude}, models::{StudentSubjects,Account}};
+use crate::{entities::{subjects,subjects_attendies,users,teachers,prelude}, models::Account};
 use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use sea_orm::{query:: *, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, TransactionTrait};
 use sea_orm::sea_query::Expr;

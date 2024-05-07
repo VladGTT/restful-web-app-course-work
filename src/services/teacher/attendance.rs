@@ -1,7 +1,7 @@
 
 use crate::{entities::{attended_meetings, meetings, prelude, students, subjects, subjects_attendies, users}, models::*};
 use actix_web::{get,post,put,delete, web, HttpMessage, HttpRequest, HttpResponse, Responder};
-use sea_orm::{query::*, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, Set, TransactionTrait, Unchanged};
+use sea_orm::{query::*, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, Set, TransactionTrait, Unchanged};
 use validator::Validate;
 
 
@@ -224,7 +224,7 @@ pub async fn put_teacher_attendance(req: HttpRequest,pool: web::Data<DatabaseCon
 }
 
 #[delete("/attendance")]
-pub async fn delete_teacher_attendance(req: HttpRequest,pool: web::Data<DatabaseConnection>,data: web::Json<Attendance>)-> impl Responder {
+pub async fn delete_teacher_attendance(req: HttpRequest,pool: web::Data<DatabaseConnection>,data: web::Json<AttendanceId>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -259,7 +259,7 @@ pub async fn delete_teacher_attendance(req: HttpRequest,pool: web::Data<Database
         meeting_id: Unchanged(data.meeting_id),
         subject_id: Unchanged(data.subject_id),
         student_id: Unchanged(data.student_id.clone()),
-        percentage: Unchanged(data.percentage)
+        percentage: NotSet
     };
     
     let delete_result = attended_meetings::Entity::delete(new_attended_meeting)

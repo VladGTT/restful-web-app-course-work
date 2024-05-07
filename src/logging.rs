@@ -1,11 +1,10 @@
-use std::{future::{ready, Ready}, io::Write};
+use std::future::{ready, Ready};
 
 use actix_web::{
     body::EitherBody, dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform}, Error,
 };
-use futures_util::{future::LocalBoxFuture, TryFutureExt};
+use futures_util::future::LocalBoxFuture;
 use sea_orm::{ ActiveModelTrait, ActiveValue::NotSet, DatabaseConnection, Set};
-use std::sync::Arc;
 use crate::entities::logs;
 use futures::executor::block_on;
 
@@ -67,7 +66,7 @@ where
             description: Set(format!("Path: {}, Method: {}, Addr: {:?}",http_req.path(),http_req.head().method,http_req.peer_addr())) 
         }; 
 
-        block_on(new_entry.insert(&self.pool));
+        _ = block_on(new_entry.insert(&self.pool));
                                
         let fut = self.service.call(ServiceRequest::from_parts(http_req, payload));
         Box::pin(async move {

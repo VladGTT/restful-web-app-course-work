@@ -21,9 +21,18 @@ mod auth;
 mod valid;
 mod services;
 mod models;
-mod templates;
 mod entities;
 mod logging;
+
+pub const STUDENT_ROLE_ID: i32 = 2;
+pub const ADMIN_ROLE_ID: i32 = 3;
+pub const TEACHER_ROLE_ID: i32 = 1;
+
+
+
+
+
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -58,7 +67,7 @@ async fn main() -> std::io::Result<()> {
             
             .service(
                 web::scope("/teacher")
-                .wrap(auth::Authentication::new(1))
+                .wrap(auth::Authentication::new(TEACHER_ROLE_ID))
                 // .service(get_teacher_attendance)
                 // .service(post_teacher_attendance)
                 // .service(put_teacher_attendance)
@@ -75,7 +84,7 @@ async fn main() -> std::io::Result<()> {
             )        
             .service(
                 web::scope("/student")   
-                .wrap(auth::Authentication::new(2))
+                .wrap(auth::Authentication::new(STUDENT_ROLE_ID))
                 .service(get_student_subjects)
                 .service(get_student_profile)
                 .service(get_student_tasks)

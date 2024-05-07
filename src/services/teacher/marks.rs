@@ -1,8 +1,8 @@
-use crate::{entities::{assignments, assignments_marks, prelude, students, subjects, subjects_attendies, users}, models::*, templates};
+use crate::{entities::{assignments, assignments_marks, prelude, students, subjects, subjects_attendies, users}, models::*};
 use actix_web::{get,post,put,delete, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use validator::Validate;
 
-use sea_orm::{query::*, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, Set, TransactionTrait, Unchanged};
+use sea_orm::{query::*, ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, Set, TransactionTrait, Unchanged};
 
 
 #[get("/marks")]
@@ -17,7 +17,6 @@ pub async fn get_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnecti
         Ok(dat)=> dat,
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
-
 
     // "SELECT 
     //     u.firstname,
@@ -180,7 +179,7 @@ pub async fn put_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnecti
 }
 
 #[delete("/marks")]
-pub async fn delete_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnection>,data: web::Json<Mark>)-> impl Responder {
+pub async fn delete_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnection>,data: web::Json<MarkId>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -213,11 +212,10 @@ pub async fn delete_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConne
         assignment_id: Unchanged(data.assignment_id),
         subject_id: Unchanged(data.subject_id),
         student_id: Unchanged(data.student_id.clone()),
-        mark: Unchanged(Some(data.mark))
+        mark: NotSet
     };
 
     let delete_result = new_mark.delete(&transaction).await;
-
 
     match delete_result.and(check_result.map(|val|val.filter(|v|*v==1))){
         Ok(Some(_)) =>{

@@ -1,4 +1,5 @@
 
+use chrono::NaiveDateTime;
 use sea_orm::FromQueryResult;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -11,7 +12,15 @@ pub struct Attendance{
     #[validate(email)]
     pub student_id: String,
     pub subject_id: i32,
+    #[validate(range(exclusive_min = 0.0, max = 100.0))]
     pub percentage: f32
+}
+#[derive(Deserialize,Validate)]
+pub struct AttendanceId{
+    pub meeting_id: i32,
+    #[validate(email)]
+    pub student_id: String,
+    pub subject_id: i32,
 }
 
 #[derive(Deserialize,Validate)]
@@ -20,9 +29,141 @@ pub struct Mark{
     #[validate(email)]
     pub student_id: String, 
     pub subject_id: i32, 
+    #[validate(range(exclusive_min = 0.0, max = 100.0))]
     pub mark: f32
 }
 
+#[derive(Deserialize,Validate)]
+pub struct MarkId{
+    pub assignment_id: i32,
+    #[validate(email)]
+    pub student_id: String, 
+    pub subject_id: i32, 
+}
+
+
+
+
+#[derive(Deserialize,Validate)]
+pub struct Subject{
+    pub id: i32,
+    pub name: String,
+    pub description: String,
+    pub semestr: Option<i32>,
+    #[validate(email)]
+    pub teacher_id: String
+}
+#[derive(Deserialize,Validate)]
+pub struct SubjectIdLess{
+    pub name: String,
+    pub description: String,
+    pub semestr: Option<i32>,
+    #[validate(email)]
+    pub teacher_id: String
+}
+
+#[derive(Deserialize,Validate)]
+pub struct SubjectId{
+    pub id: i32
+}
+
+
+#[derive(Deserialize,Validate)]
+pub struct SubjectsAttendie{
+    #[validate(email)]
+    pub student_id: String,
+    pub subject_id: i32
+}
+
+
+
+#[derive(Deserialize,Validate)]
+pub struct Meeting{
+    pub id: i32,
+    pub subject_id: i32,
+    pub name: String,
+    pub time: NaiveDateTime
+}
+#[derive(Deserialize,Validate)]
+pub struct MeetingIdLess{
+    pub subject_id: i32,
+    pub name: String,
+    pub time: NaiveDateTime
+}
+#[derive(Deserialize,Validate)]
+pub struct MeetingId{
+    pub id: i32
+}
+
+#[derive(Deserialize,Validate)]
+pub struct Assignment{
+    pub id: i32,
+    pub subject_id: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub due_to: NaiveDateTime,
+    pub max_point: f32
+}
+#[derive(Deserialize,Validate)]
+pub struct AssignmentIdLess{
+    pub subject_id: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub due_to: NaiveDateTime,
+    pub max_point: f32
+}
+
+#[derive(Deserialize,Validate)]
+pub struct AssignmentId{
+    pub id: i32
+}
+
+#[derive(Deserialize,Validate)]
+pub struct StudentPassLess{
+    pub email: String,
+    pub firstname: String,
+    pub secondname: String,
+    pub lastname: String,
+    pub group: String,
+}
+#[derive(Deserialize,Validate)]
+pub struct Student{
+    pub email: String,
+    pub password: String,
+    pub firstname: String,
+    pub secondname: String,
+    pub lastname: String,
+    pub group: String,
+}
+
+#[derive(Deserialize,Validate)]
+pub struct StudentId{
+    pub email: String
+}
+
+
+#[derive(Deserialize,Validate)]
+pub struct TeacherPassLess{
+    pub email: String,
+    pub firstname: String,
+    pub secondname: String,
+    pub lastname: String,
+    pub occupation: String,
+}
+#[derive(Deserialize,Validate)]
+pub struct Teacher{
+    pub email: String,
+    pub password: String,
+    pub firstname: String,
+    pub secondname: String,
+    pub lastname: String,
+    pub occupation: String,
+}
+
+#[derive(Deserialize,Validate)]
+pub struct TeacherId{
+    pub email: String
+}
 
 
 //---------------------------------- AUTH ------------------------------------//
@@ -43,120 +184,21 @@ pub struct AuthorizationToken{
     pub authorization: String
 }
 
-
-// ------------------------------- STUDENTS ------------------------------------ //
-#[derive(Serialize,FromQueryResult)]
-pub struct StudentSubjects{
-    pub id: i32,
-    pub name: String,
-    pub description: String,
-    pub semestr: i32,
-    pub teacher: String,
-    pub occupation: String
-}  
-
-#[derive(Serialize,FromQueryResult)]
-pub struct StudentProfileData{
-    pub email: String,
-    pub firstname: String,
-    pub secondname: String,
-    pub lastname: String,
-    pub group: String,
-}
+// --------------------------------- STUDENT ---------------------------------- //
 
 #[derive(Deserialize)]
 pub struct StudentSubjectQuery{
     pub subject_id: i32
 }
 
-#[derive(Serialize,FromQueryResult)]
-pub struct StudentTasks{
-    pub id: i32,
-    pub name: String,
-    pub description: String,
-    pub due_to: chrono::NaiveDateTime,
-    pub mark: Option<f32>,
-    pub max_point: f32
-}
-
-#[derive(Serialize,FromQueryResult)]
-pub struct StudentMeetings{
-    pub id: i32,
-    pub name: String,
-    pub time: chrono::NaiveDateTime,
-    pub attendance: f32
-}
-
-#[derive(Serialize,FromQueryResult)]
-pub struct StudentTeachers{
-    pub firstname: String,
-    pub secondname: String,
-    pub lastname: String,
-    pub occupation: String,
-    pub subject_name: String,
-}
 
 // --------------------------------- TEACHER ---------------------------------- //
+
 #[derive(Deserialize)]
 pub struct TeacherSubjectQuery{
     pub subject_id: i32
 }
 
-#[derive(Serialize)]
-pub struct TeacherStudents{
-    pub firstname: String,
-    pub secondname: String,
-    pub lastname: String,
-    pub group: String,
-}
 
-#[derive(Serialize)]
-pub struct TeacherSubjects{
-    pub id: i32,
-    pub name: String,
-    pub description: String,
-    pub semestr: i32,
-} 
+// --------------------------------- ADMIN ---------------------------------- //
 
-#[derive(Serialize)]
-pub struct TeacherProfileData{
-    pub email: String,
-    pub firstname: String,
-    pub secondname: String,
-    pub lastname: String,
-    pub occupation: String
-}
-
-#[derive(Serialize)]
-pub struct TeacherTasks{
-    pub id: i32,
-    pub name: String,
-    pub description: String,
-    pub due_to: chrono::NaiveDateTime,
-    pub max_point: f32
-}
-
-#[derive(Serialize)]
-pub struct TeacherMeetings{
-    pub id: i32,
-    pub name: String,
-    pub time: chrono::NaiveDateTime
-}
-
-#[derive(Serialize,FromQueryResult)]
-pub struct TeacherMarks{
-    pub firstname: String,
-    pub secondname: String,
-    pub lastname: String,
-    pub assignment_name: String,
-    pub mark: f32
-}
-
-#[derive(Serialize,FromQueryResult)]
-pub struct TeacherAttendance{
-    pub firstname: String,
-    pub secondname: String,
-    pub lastname: String,
-    pub meeting_name: String,
-    pub percentage: f32
-}
