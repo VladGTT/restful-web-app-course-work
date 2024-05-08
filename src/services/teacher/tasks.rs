@@ -1,11 +1,11 @@
-use crate::{entities::{assignments, subjects}, models::*};
+use crate::entities::{accounts::Model as Account,assignments, subjects};
 use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use sea_orm::{query::*, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, TransactionTrait};
 
 
 
 #[get("/tasks")]
-pub async fn get_teacher_tasks(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<TeacherSubjectQuery>)-> impl Responder {
+pub async fn get_teacher_tasks(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<subjects::ModelQuery>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -38,10 +38,10 @@ pub async fn get_teacher_tasks(req: HttpRequest,pool: web::Data<DatabaseConnecti
             assignments::Column::DueTo,
             assignments::Column::MaxPoint
         ])
-        .join(JoinType::InnerJoin, subjects::Relation::Assignments.def().rev())
+        .join(JoinType::InnerJoin, assignments::Relation::Subjects.def())
         .filter(
             Condition::all()
-                .add(subjects::Column::TeacherId.eq(account.login.clone()))
+                .add(subjects::Column::TeacherId.eq(account.email.clone()))
                 .add(subjects::Column::Id.eq(query.subject_id))
         )
         .into_json()

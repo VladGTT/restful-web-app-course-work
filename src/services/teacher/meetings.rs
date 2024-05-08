@@ -1,11 +1,11 @@
-use crate::{entities::{meetings, subjects}, models::*};
+use crate::entities::{accounts::Model as Account,meetings, subjects};
 use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use sea_orm::{query::*, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, TransactionTrait};
 
 
 
 #[get("/meetings")]
-pub async fn get_teacher_meetings(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<TeacherSubjectQuery>)-> impl Responder {
+pub async fn get_teacher_meetings(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<subjects::ModelQuery>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -36,10 +36,10 @@ pub async fn get_teacher_meetings(req: HttpRequest,pool: web::Data<DatabaseConne
                 meetings::Column::Time
             ]
         )
-        .join(JoinType::InnerJoin, subjects::Relation::Meetings.def().rev())
+        .join(JoinType::InnerJoin, meetings::Relation::Subjects.def())
         .filter(
             Condition::all()
-                .add(subjects::Column::TeacherId.eq(account.login.clone()))
+                .add(subjects::Column::TeacherId.eq(account.email.clone()))
                 .add(subjects::Column::Id.eq(query.subject_id))
         )
         .into_json()

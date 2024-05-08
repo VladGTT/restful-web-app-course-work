@@ -1,11 +1,11 @@
-use crate::{entities::{assignments, assignments_marks, prelude}, models::*};
+use crate::entities::{accounts::Model as Account, assignments, assignments_marks, subjects};
 use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use sea_orm::{query::*, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, TransactionTrait};
 
 
 
 #[get("/tasks")]
-pub async fn get_student_tasks(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<StudentSubjectQuery>)-> impl Responder {
+pub async fn get_student_tasks(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<subjects::ModelQuery>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -34,7 +34,7 @@ pub async fn get_student_tasks(req: HttpRequest,pool: web::Data<DatabaseConnecti
     
 
 
-    let result = prelude::Assignments::find()
+    let result = assignments::Entity::find()
         .select_only()
         .columns(
             [
@@ -46,10 +46,10 @@ pub async fn get_student_tasks(req: HttpRequest,pool: web::Data<DatabaseConnecti
         )
         .column(assignments_marks::Column::Mark)   
         .column(assignments::Column::MaxPoint)   
-        .join(JoinType::LeftJoin,assignments_marks::Relation::Assignments.def().rev())
+        .join(JoinType::LeftJoin,assignments::Relation::AssignmentsMarks.def().rev())
         .filter(
             Condition::all()
-                .add(assignments_marks::Column::StudentId.eq(account.login.clone()))
+                .add(assignments_marks::Column::StudentId.eq(account.email.clone()))
                 .add(assignments_marks::Column::SubjectId.eq(query.subject_id))
         )
         .into_json()

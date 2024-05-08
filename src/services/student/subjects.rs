@@ -1,4 +1,4 @@
-use crate::{entities::{subjects,subjects_attendies,users,teachers,prelude}, models::Account};
+use crate::entities::{accounts::Model as Account,subjects,subjects_attendies,users,teachers};
 use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use sea_orm::{query:: *, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, TransactionTrait};
 use sea_orm::sea_query::Expr;
@@ -33,7 +33,7 @@ pub async fn get_student_subjects(req: HttpRequest,pool: web::Data<DatabaseConne
     //     users u ON t.email = u.email
     // WHERE sa.student_id = ?
      
-    let result = prelude::Subjects::find()
+    let result = subjects::Entity::find()
         .select_only()
         .columns(
             [
@@ -67,10 +67,10 @@ pub async fn get_student_subjects(req: HttpRequest,pool: web::Data<DatabaseConne
             "teacher"
         )
         .column(teachers::Column::Occupation)
-        .join(JoinType::InnerJoin, subjects_attendies::Relation::Subjects.def().rev())
+        .join(JoinType::InnerJoin, subjects::Relation::SubjectsAttendies.def())
         .join(JoinType::InnerJoin, teachers::Relation::Subjects.def().rev())
-        .join(JoinType::InnerJoin, users::Relation::Teachers.def().rev())
-        .filter(subjects_attendies::Column::StudentId.eq(account.login.clone()))
+        .join(JoinType::InnerJoin, teachers::Relation::Users.def())
+        .filter(subjects_attendies::Column::StudentId.eq(account.email.clone()))
         .into_json() 
         .all(&transaction)
         .await;

@@ -1,6 +1,7 @@
-use crate::{entities::{self, students, users}, models::*};
-use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
-use sea_orm::{query::*, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, TransactionTrait};
+use crate::{entities::{accounts::{self,Model as Account}, students, users}, STUDENT_ROLE_ID};
+use actix_web::{get, put, web::{self, Json}, HttpMessage, HttpRequest, HttpResponse, Responder};
+use sea_orm::{query::*, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, Set, TransactionTrait, Unchanged};
+use validator::Validate;
 
 
 
@@ -30,7 +31,7 @@ pub async fn get_student_profile(req: HttpRequest,pool: web::Data<DatabaseConnec
     //     users u ON st.email=u.email
     // WHERE u.email = ?
     
-    let result = entities::prelude::Students::find()
+    let result = students::Entity::find()
         .select_only()
         .columns([
             users::Column::Email,
@@ -39,8 +40,8 @@ pub async fn get_student_profile(req: HttpRequest,pool: web::Data<DatabaseConnec
             users::Column::Lastname,
         ])
         .column(students::Column::Group)
-        .join(JoinType::InnerJoin, entities::users::Relation::Students.def().rev())
-        .filter(entities::users::Column::Email.eq(account.login.clone()))
+        .join(JoinType::InnerJoin, students::Relation::Users.def())
+        .filter(users::Column::Email.eq(account.email.clone()))
         .into_json()
         .all(&transaction)
         .await;
@@ -52,4 +53,39 @@ pub async fn get_student_profile(req: HttpRequest,pool: web::Data<DatabaseConnec
         }
         Err(err) => HttpResponse::InternalServerError().body(err.to_string())
     }
+}
+
+#[put("/profile")]
+pub async fn update_student_profile(req: HttpRequest,pool: web::Data<DatabaseConnection>, data: Json<accounts::ModelPass> )-> impl Responder {
+    let ext = req.extensions();
+    let account = match ext.get::<Account>(){
+        Some(acc) => acc,
+        None => return HttpResponse::InternalServerError().finish()
+    };
+
+    if data.validate().is_err(){
+        return HttpResponse::InternalServerError().finish()
+    }
+
+    let transaction = match pool.begin_with_config(Some(sea_orm::IsolationLevel::Serializable), None).await{
+        Ok(dat)=> dat,
+        Err(_)=>return HttpResponse::InternalServerError().finish()
+    };
+    
+    let new_account = accounts::ActiveModel{
+        email: Unchanged(account.email.to_owned()),
+        password: Set(data.password.to_owned()),
+        role: Unchanged(STUDENT_ROLE_ID)
+    };
+
+    let result = new_account.update(&transaction).await;
+    
+    match result {
+        Ok(_)=>{
+            _ = transaction.commit().await;
+            HttpResponse::Ok().finish()        
+        }
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+    }
+    
 }

@@ -1,7 +1,7 @@
 
-use crate::{entities::{attended_meetings, meetings, prelude, students, subjects, subjects_attendies, users}, models::*};
+use crate::entities::{attended_meetings, meetings, students, subjects, subjects_attendies, users};
 use actix_web::{get,post,put,delete, web, HttpResponse, Responder};
-use sea_orm::{query::*, ActiveValue::NotSet, DatabaseConnection, EntityTrait, RelationTrait, Set, TransactionTrait, Unchanged};
+use sea_orm::{query::*, ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel, RelationTrait, Set, TransactionTrait};
 use validator::Validate;
 
 
@@ -33,7 +33,7 @@ pub async fn get_admin_attendance(pool: web::Data<DatabaseConnection>)-> impl Re
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
 
-    let result = prelude::AttendedMeetings::find()
+    let result = attended_meetings::Entity::find()
         .select_only()
         .columns(
             [
@@ -45,7 +45,7 @@ pub async fn get_admin_attendance(pool: web::Data<DatabaseConnection>)-> impl Re
         .column_as(subjects::Column::Name,"subject_name")
         .column_as(meetings::Column::Name,"meeting_name")
         .column(attended_meetings::Column::Percentage)
-        .join(JoinType::RightJoin,meetings::Relation::AttendedMeetings.def().rev())
+        .join(JoinType::RightJoin, attended_meetings::Relation::Meetings.def())
         .join(JoinType::InnerJoin, subjects::Relation::Meetings.def().rev())
         .join(JoinType::InnerJoin, subjects_attendies::Relation::AttendedMeetings.def().rev())
         .join(JoinType::InnerJoin, students::Relation::SubjectsAttendies.def().rev())
@@ -66,7 +66,7 @@ pub async fn get_admin_attendance(pool: web::Data<DatabaseConnection>)-> impl Re
 
 
 #[post("/attendance")]
-pub async fn post_admin_attendance(pool: web::Data<DatabaseConnection>,data: web::Json<Attendance>)-> impl Responder {
+pub async fn post_admin_attendance(pool: web::Data<DatabaseConnection>,data: web::Json<attended_meetings::Model>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -78,17 +78,7 @@ pub async fn post_admin_attendance(pool: web::Data<DatabaseConnection>,data: web
     };
              
     
-    let new_attended_meeting = attended_meetings::ActiveModel{
-        meeting_id: Set(data.meeting_id),
-        subject_id: Set(data.subject_id),
-        student_id: Set(data.student_id.clone()),
-        percentage: Set(data.percentage)
-    };
-
-    let insert_result = attended_meetings::Entity::insert(new_attended_meeting)
-        .exec(&transaction)
-        .await;
-
+    let insert_result = data.to_owned().into_active_model().insert(&transaction).await;
 
     match insert_result{
         Ok(_) =>{
@@ -101,7 +91,7 @@ pub async fn post_admin_attendance(pool: web::Data<DatabaseConnection>,data: web
 }
 
 #[put("/attendance")]
-pub async fn put_admin_attendance(pool: web::Data<DatabaseConnection>,data: web::Json<Attendance>)-> impl Responder {
+pub async fn put_admin_attendance(pool: web::Data<DatabaseConnection>,data: web::Json<attended_meetings::Model>)-> impl Responder {
     
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -112,16 +102,11 @@ pub async fn put_admin_attendance(pool: web::Data<DatabaseConnection>,data: web:
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
 
-    let new_attended_meeting = attended_meetings::ActiveModel{
-        meeting_id: Unchanged(data.meeting_id),
-        subject_id: Unchanged(data.subject_id),
-        student_id: Unchanged(data.student_id.clone()),
-        percentage: Set(data.percentage)
-    };
+
+    let mut new_object = data.to_owned().into_active_model();
+    new_object.percentage = Set(data.percentage);
+    let update_result = new_object.update(&transaction).await;
     
-    let update_result = attended_meetings::Entity::update(new_attended_meeting)
-        .exec(&transaction)
-        .await;
     
     match update_result{
         Ok(_) =>{
@@ -134,7 +119,7 @@ pub async fn put_admin_attendance(pool: web::Data<DatabaseConnection>,data: web:
 }
 
 #[delete("/attendance")]
-pub async fn delete_admin_attendance(pool: web::Data<DatabaseConnection>,data: web::Json<Attendance>)-> impl Responder {
+pub async fn delete_admin_attendance(pool: web::Data<DatabaseConnection>,data: web::Json<attended_meetings::ModelId>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -144,18 +129,9 @@ pub async fn delete_admin_attendance(pool: web::Data<DatabaseConnection>,data: w
         Ok(dat)=> dat,
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
+    
+    let delete_result = data.to_owned().into_active_model().delete(&transaction).await;
 
-    let new_attended_meeting = attended_meetings::ActiveModel{
-        meeting_id: Unchanged(data.meeting_id),
-        subject_id: Unchanged(data.subject_id),
-        student_id: Unchanged(data.student_id.clone()),
-        percentage: NotSet
-    };
-    
-    let delete_result = attended_meetings::Entity::delete(new_attended_meeting)
-        .exec(&transaction)
-        .await;
-    
     match delete_result{
         Ok(_) =>{
             _ = transaction.commit().await;

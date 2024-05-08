@@ -1,8 +1,8 @@
-use crate::{entities::{ meetings, subjects, }, models::*};
+use crate::entities::{ meetings, subjects};
 use actix_web::{get,post,put,delete, web, HttpResponse, Responder};
 use validator::Validate;
 
-use sea_orm::{query::*, ActiveModelTrait, ActiveValue::NotSet, DatabaseConnection, EntityTrait, RelationTrait, Set, TransactionTrait, Unchanged};
+use sea_orm::{query::*, ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel, RelationTrait, Set, TransactionTrait};
 
 
 #[get("/meetings")]
@@ -50,7 +50,7 @@ pub async fn get_admin_meetings(pool: web::Data<DatabaseConnection>)-> impl Resp
 
 
 #[post("/meetings")]
-pub async fn post_admin_meetings(pool: web::Data<DatabaseConnection>,data: web::Json<MeetingIdLess>)-> impl Responder {
+pub async fn post_admin_meetings(pool: web::Data<DatabaseConnection>,data: web::Json<meetings::ModelIdLess>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -61,15 +61,7 @@ pub async fn post_admin_meetings(pool: web::Data<DatabaseConnection>,data: web::
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
 
-    
-    let new_meeting = meetings::ActiveModel{
-        id: NotSet,
-        subject_id: Set(data.subject_id),
-        name: Set(data.name.clone()),
-        time: Set(data.time),
-    };
-
-    let insert_result = new_meeting.insert(&transaction).await; 
+    let insert_result = data.to_owned().into_active_model().insert(&transaction).await; 
 
     match insert_result{
         Ok(_) =>{
@@ -82,7 +74,7 @@ pub async fn post_admin_meetings(pool: web::Data<DatabaseConnection>,data: web::
 }
 
 #[put("/meetings")]
-pub async fn put_admin_meetings(pool: web::Data<DatabaseConnection>,data: web::Json<Meeting>)-> impl Responder {
+pub async fn put_admin_meetings(pool: web::Data<DatabaseConnection>,data: web::Json<meetings::Model>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -93,14 +85,13 @@ pub async fn put_admin_meetings(pool: web::Data<DatabaseConnection>,data: web::J
     };
 
    
-    let new_meeting = meetings::ActiveModel{
-        id: Unchanged(data.id),
-        subject_id: Set(data.subject_id),
-        name: Set(data.name.clone()),
-        time: Set(data.time),
-    };
+    let mut new_object = data.to_owned().into_active_model();
+    new_object.subject_id = Set(data.subject_id);
+    new_object.name = Set(data.name.clone());
+    new_object.time = Set(data.time);
 
-    let update_result = new_meeting.update(&transaction).await;
+    let update_result = new_object.into_active_model().update(&transaction).await;
+    
 
     match update_result{
         Ok(_) =>{
@@ -114,7 +105,7 @@ pub async fn put_admin_meetings(pool: web::Data<DatabaseConnection>,data: web::J
 }
 
 #[delete("/meetings")]
-pub async fn delete_admin_meetings(pool: web::Data<DatabaseConnection>,data: web::Json<MeetingId>)-> impl Responder {
+pub async fn delete_admin_meetings(pool: web::Data<DatabaseConnection>,data: web::Json<meetings::ModelId>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -124,7 +115,7 @@ pub async fn delete_admin_meetings(pool: web::Data<DatabaseConnection>,data: web
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
     
-    let delete_result = subjects::Entity::delete_by_id(data.id).exec(&transaction).await;
+    let delete_result = data.to_owned().into_active_model().delete(&transaction).await;
 
     match delete_result{
         Ok(_) =>{

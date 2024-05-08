@@ -1,4 +1,4 @@
-use crate::{entities::subjects, models::*};
+use crate::entities::{subjects,accounts::Model as Account};
 use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use sea_orm::{query::*, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, TransactionTrait};
 
@@ -34,7 +34,7 @@ pub async fn get_teacher_subjects(req: HttpRequest,pool: web::Data<DatabaseConne
             subjects::Column::Description,
             subjects::Column::Semestr,
         ])
-        .filter(subjects::Column::TeacherId.eq(account.login.clone()))
+        .filter(subjects::Column::TeacherId.eq(account.email.clone()))
         .into_json()
         .all(&transaction)
         .await;

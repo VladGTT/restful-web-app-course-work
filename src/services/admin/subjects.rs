@@ -1,9 +1,9 @@
-use crate::{entities::{ prelude, subjects, teachers, users}, models::*};
+use crate::entities::{subjects, teachers, users};
 use actix_web::{get,post,put,delete, web, HttpResponse, Responder};
 use sea_query::Expr;
 use validator::Validate;
 
-use sea_orm::{query::*, ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait, RelationTrait, Set, TransactionTrait, Unchanged};
+use sea_orm::{query::*, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, RelationTrait, Set, TransactionTrait};
 
 
 #[get("/subjects")]
@@ -28,7 +28,7 @@ pub async fn get_admin_subjects(pool: web::Data<DatabaseConnection>)-> impl Resp
     // INNER JOIN
     //     users u ON t.email = u.email";
 
-    let result = prelude::AssignmentsMarks::find()
+    let result = subjects::Entity::find()
         .select_only()
         .columns(
             [
@@ -81,7 +81,7 @@ pub async fn get_admin_subjects(pool: web::Data<DatabaseConnection>)-> impl Resp
 
 
 #[post("/subjects")]
-pub async fn post_admin_subjects(pool: web::Data<DatabaseConnection>,data: web::Json<SubjectIdLess>)-> impl Responder {
+pub async fn post_admin_subjects(pool: web::Data<DatabaseConnection>,data: web::Json<subjects::ModelIdLess>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -91,17 +91,8 @@ pub async fn post_admin_subjects(pool: web::Data<DatabaseConnection>,data: web::
         Ok(dat)=> dat,
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
-
-    
-    let new_subject = subjects::ActiveModel{
-        id: NotSet,
-        name: Set(data.name.clone()),
-        description: Set(data.description.clone()),
-        semestr: Set(data.semestr),
-        teacher_id: Set(data.teacher_id.clone()),
-    };
-
-    let insert_result = new_subject.insert(&transaction).await; 
+   
+    let insert_result = data.to_owned().into_active_model().insert(&transaction).await; 
 
     match insert_result{
         Ok(_) =>{
@@ -114,7 +105,7 @@ pub async fn post_admin_subjects(pool: web::Data<DatabaseConnection>,data: web::
 }
 
 #[put("/subjects")]
-pub async fn put_admin_subjects(pool: web::Data<DatabaseConnection>,data: web::Json<Subject>)-> impl Responder {
+pub async fn put_admin_subjects(pool: web::Data<DatabaseConnection>,data: web::Json<subjects::Model>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -123,17 +114,17 @@ pub async fn put_admin_subjects(pool: web::Data<DatabaseConnection>,data: web::J
         Ok(dat)=> dat,
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
+ 
 
-   
-    let new_subject = subjects::ActiveModel{
-        id: Unchanged(data.id),
-        name: Set(data.name.clone()),
-        description: Set(data.description.clone()),
-        semestr: Set(data.semestr),
-        teacher_id: Set(data.teacher_id.clone()),
-    };
+    let mut new_object = data.to_owned().into_active_model();
 
-    let update_result = new_subject.update(&transaction).await;
+    new_object.name = Set(data.name.to_owned());
+    new_object.description = Set(data.description.to_owned());
+    new_object.semestr = Set(data.semestr);
+    new_object.teacher_id = Set(data.teacher_id.to_owned());
+
+    let update_result = new_object.update(&transaction).await;
+    
 
     match update_result{
         Ok(_) =>{
@@ -147,7 +138,7 @@ pub async fn put_admin_subjects(pool: web::Data<DatabaseConnection>,data: web::J
 }
 
 #[delete("/subjects")]
-pub async fn delete_admin_subjects(pool: web::Data<DatabaseConnection>,data: web::Json<SubjectId>)-> impl Responder {
+pub async fn delete_admin_subjects(pool: web::Data<DatabaseConnection>,data: web::Json<subjects::ModelId>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()

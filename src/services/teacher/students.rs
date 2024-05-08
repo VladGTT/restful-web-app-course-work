@@ -1,11 +1,11 @@
-use crate::{entities::{students, subjects, subjects_attendies, users}, models::*};
+use crate::entities::{accounts::Model as Account, students, subjects, subjects_attendies, users};
 use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use sea_orm::{query::*, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, TransactionTrait};
 
 
 
 #[get("/students")]
-pub async fn get_teacher_students(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<TeacherSubjectQuery>)-> impl Responder {
+pub async fn get_teacher_students(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<subjects::ModelQuery>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -41,19 +41,17 @@ pub async fn get_teacher_students(req: HttpRequest,pool: web::Data<DatabaseConne
             users::Column::Lastname
         ])
         .column(students::Column::Group)
-        .join(JoinType::InnerJoin, students::Relation::SubjectsAttendies.def().rev())
-        .join(JoinType::InnerJoin, users::Relation::Students.def().rev())
-        .join(JoinType::InnerJoin, subjects::Relation::SubjectsAttendies.def().rev())
+        .join(JoinType::InnerJoin, subjects_attendies::Relation::Students.def())
+        .join(JoinType::InnerJoin, students::Relation::Users.def())
+        .join(JoinType::InnerJoin, subjects_attendies::Relation::Subjects.def())
         .filter(
             Condition::all()
-                .add(subjects::Column::TeacherId.eq(account.login.clone()))
+                .add(subjects::Column::TeacherId.eq(account.email.clone()))
                 .add(subjects_attendies::Column::SubjectId.eq(query.subject_id))
         )
         .into_json()
         .all(&transaction)
         .await;
-
-
 
 
     match result {

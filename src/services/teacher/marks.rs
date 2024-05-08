@@ -1,12 +1,12 @@
-use crate::{entities::{assignments, assignments_marks, prelude, students, subjects, subjects_attendies, users}, models::*};
+use crate::entities::{accounts::Model as Account,assignments, assignments_marks, students, subjects, subjects_attendies, users};
 use actix_web::{get,post,put,delete, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use validator::Validate;
 
-use sea_orm::{query::*, ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, Set, TransactionTrait, Unchanged};
+use sea_orm::{query::*, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, RelationTrait, Set, TransactionTrait};
 
 
 #[get("/marks")]
-pub async fn get_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<TeacherSubjectQuery>)-> impl Responder {
+pub async fn get_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<subjects::ModelQuery>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -38,7 +38,7 @@ pub async fn get_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnecti
     //     users u ON u.email = s.email
     // WHERE sb.teacher_id = ? AND sb.id = ?"
 
-    let result = prelude::AssignmentsMarks::find()
+    let result = assignments_marks::Entity::find()
         .select_only()
         .columns(
             [
@@ -49,14 +49,14 @@ pub async fn get_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnecti
         )
         .column(assignments::Column::Name)
         .column(assignments_marks::Column::Mark)
-        .join(JoinType::RightJoin, assignments::Relation::AssignmentsMarks.def().rev())
-        .join(JoinType::InnerJoin, subjects::Relation::Assignments.def().rev())
-        .join(JoinType::InnerJoin, subjects_attendies::Relation::AssignmentsMarks.def().rev())
-        .join(JoinType::InnerJoin, students::Relation::SubjectsAttendies.def().rev())
-        .join(JoinType::InnerJoin, users::Relation::Students.def().rev())
+        .join(JoinType::RightJoin, assignments_marks::Relation::Assignments.def())
+        .join(JoinType::InnerJoin, assignments::Relation::Subjects.def())
+        .join(JoinType::InnerJoin, assignments_marks::Relation::SubjectsAttendies.def())
+        .join(JoinType::InnerJoin, subjects_attendies::Relation::Students.def())
+        .join(JoinType::InnerJoin, students::Relation::Users.def())
         .filter(
             Condition::all()
-                .add(subjects::Column::TeacherId.eq(account.login.clone()))
+                .add(subjects::Column::TeacherId.eq(account.email.clone()))
                 .add(subjects::Column::Id.eq(query.subject_id))
         )
         .into_json()
@@ -76,7 +76,7 @@ pub async fn get_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnecti
 
 
 #[post("/marks")]
-pub async fn post_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnection>,data: web::Json<Mark>)-> impl Responder {
+pub async fn post_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnection>,data: web::Json<assignments_marks::Model>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -92,42 +92,36 @@ pub async fn post_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnect
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
 
-    let check_result: Result<Option<i32>, sea_orm::prelude::DbErr> = assignments::Entity::find()        
+    let check_result: Result<Option<i32>, sea_orm::prelude::DbErr> = assignments::Entity::find()
+        .select_only()        
         .column_as(assignments::Column::Id.count(),"count")
-        .join(JoinType::InnerJoin, subjects::Relation::Assignments.def().rev())
-        .join(JoinType::InnerJoin,subjects_attendies::Relation::Subjects.def().rev())
+        .join(JoinType::InnerJoin, assignments::Relation::Subjects.def())
+        .join(JoinType::InnerJoin,subjects::Relation::SubjectsAttendies.def())
         .filter(
             Condition::all()
                 .add(assignments::Column::Id.eq(data.assignment_id))
                 .add(subjects_attendies::Column::StudentId.eq(data.student_id.clone()))
                 .add(subjects::Column::Id.eq(data.subject_id))
-                .add(subjects::Column::TeacherId.eq(account.login.clone()))
+                .add(subjects::Column::TeacherId.eq(account.email.clone()))
         )
         .into_tuple()
         .one(&transaction)
         .await;
-    
-    let new_mark = assignments_marks::ActiveModel{
-        assignment_id: Set(data.assignment_id),
-        subject_id: Set(data.subject_id),
-        student_id: Set(data.student_id.clone()),
-        mark: Set(Some(data.mark))
-    };
 
-    let insert_result = new_mark.insert(&transaction).await; 
+    let insert_result = data.to_owned().into_active_model().insert(&transaction).await; 
 
     match insert_result.and(check_result.map(|val|val.filter(|v|*v==1))){
         Ok(Some(_)) =>{
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Ok(None) | Err(_) => HttpResponse::InternalServerError().finish()
+        _ => HttpResponse::InternalServerError().finish()
     }
 
 }
 
 #[put("/marks")]
-pub async fn put_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnection>,data: web::Json<Mark>)-> impl Responder {
+pub async fn put_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnection>,data: web::Json<assignments_marks::Model>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -142,44 +136,39 @@ pub async fn put_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnecti
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
 
-    let check_result: Result<Option<i32>, sea_orm::prelude::DbErr> = assignments::Entity::find()        
+    let check_result: Result<Option<i32>, sea_orm::prelude::DbErr> = assignments::Entity::find()
+        .select_only()        
         .column_as(assignments::Column::Id.count(),"count")
-        .join(JoinType::InnerJoin, subjects::Relation::Assignments.def().rev())
-        .join(JoinType::InnerJoin,subjects_attendies::Relation::Subjects.def().rev())
+        .join(JoinType::InnerJoin, assignments::Relation::Subjects.def())
+        .join(JoinType::InnerJoin,subjects::Relation::SubjectsAttendies.def())
         .filter(
             Condition::all()
                 .add(assignments::Column::Id.eq(data.assignment_id))
                 .add(subjects_attendies::Column::StudentId.eq(data.student_id.clone()))
                 .add(subjects::Column::Id.eq(data.subject_id))
-                .add(subjects::Column::TeacherId.eq(account.login.clone()))
+                .add(subjects::Column::TeacherId.eq(account.email.clone()))
         )
         .into_tuple()
         .one(&transaction)
         .await;
     
-    let new_mark = assignments_marks::ActiveModel{
-        assignment_id: Unchanged(data.assignment_id),
-        subject_id: Unchanged(data.subject_id),
-        student_id: Unchanged(data.student_id.clone()),
-        mark: Set(Some(data.mark))
-    };
-
-    let update_result = new_mark.update(&transaction).await;
-
+    let mut new_object = data.to_owned().into_active_model();
+    new_object.mark = Set(data.mark);
+    let update_result = new_object.into_active_model().update(&transaction).await;
 
     match update_result.and(check_result.map(|val|val.filter(|v|*v==1))){
         Ok(Some(_)) =>{
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Ok(None) | Err(_) => HttpResponse::InternalServerError().finish()
+        _ => HttpResponse::InternalServerError().finish()
     }
 
 
 }
 
 #[delete("/marks")]
-pub async fn delete_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnection>,data: web::Json<MarkId>)-> impl Responder {
+pub async fn delete_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnection>,data: web::Json<assignments_marks::ModelId>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -193,35 +182,30 @@ pub async fn delete_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConne
         Ok(dat)=> dat,
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
-    let check_result: Result<Option<i32>, sea_orm::prelude::DbErr> = assignments::Entity::find()        
+
+    let check_result: Result<Option<i32>, sea_orm::prelude::DbErr> = assignments::Entity::find()
+        .select_only()        
         .column_as(assignments::Column::Id.count(),"count")
-        .join(JoinType::InnerJoin, subjects::Relation::Assignments.def().rev())
-        .join(JoinType::InnerJoin,subjects_attendies::Relation::Subjects.def().rev())
+        .join(JoinType::InnerJoin, assignments::Relation::Subjects.def())
+        .join(JoinType::InnerJoin,subjects::Relation::SubjectsAttendies.def())
         .filter(
             Condition::all()
                 .add(assignments::Column::Id.eq(data.assignment_id))
                 .add(subjects_attendies::Column::StudentId.eq(data.student_id.clone()))
                 .add(subjects::Column::Id.eq(data.subject_id))
-                .add(subjects::Column::TeacherId.eq(account.login.clone()))
+                .add(subjects::Column::TeacherId.eq(account.email.clone()))
         )
         .into_tuple()
         .one(&transaction)
         .await;
 
-    let new_mark = assignments_marks::ActiveModel{
-        assignment_id: Unchanged(data.assignment_id),
-        subject_id: Unchanged(data.subject_id),
-        student_id: Unchanged(data.student_id.clone()),
-        mark: NotSet
-    };
-
-    let delete_result = new_mark.delete(&transaction).await;
+    let delete_result = data.to_owned().into_active_model().delete(&transaction).await;
 
     match delete_result.and(check_result.map(|val|val.filter(|v|*v==1))){
         Ok(Some(_)) =>{
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Ok(None) | Err(_) => HttpResponse::InternalServerError().finish()
+        _ => HttpResponse::InternalServerError().finish()
     }   
 }

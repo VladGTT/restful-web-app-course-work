@@ -2,6 +2,7 @@
 use std::{env, time::Duration};
 use sea_orm::{DatabaseConnection,ConnectOptions,Database};
 use actix_web::{web,App, HttpServer};
+use services::teacher::{marks::{delete_teacher_marks, get_teacher_marks, post_teacher_marks, put_teacher_marks}, meetings::get_teacher_meetings, profile::get_teacher_profile, students::get_teacher_students, subjects::get_teacher_subjects, tasks::get_teacher_tasks};
 use crate::services::{
     auth as Auth,
     student::{
@@ -11,16 +12,15 @@ use crate::services::{
         tasks::get_student_tasks,
         teachers::get_student_teachers,
     },
-    // teacher:: {
-    //     attendance::{delete_teacher_attendance, get_teacher_attendance, post_teacher_attendance, put_teacher_attendance}
-    // }
+    teacher:: {
+        attendance::{delete_teacher_attendance, get_teacher_attendance, post_teacher_attendance, put_teacher_attendance}
+    }
 };
 use crate::logging::Logger;
 
 mod auth;
 mod valid;
 mod services;
-mod models;
 mod entities;
 mod logging;
 
@@ -68,19 +68,19 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/teacher")
                 .wrap(auth::Authentication::new(TEACHER_ROLE_ID))
-                // .service(get_teacher_attendance)
-                // .service(post_teacher_attendance)
-                // .service(put_teacher_attendance)
-                // .service(delete_teacher_attendance)
-                // .service(get_teacher_marks)
-                // .service(post_teacher_marks)
-                // .service(put_teacher_marks)
-                // .service(delete_teacher_marks)
-                // .service(get_teacher_meetings)
-                // .service(get_teacher_profile)
-                // .service(get_teacher_subjects)
-                // .service(get_teacher_students)
-                // .service(get_teacher_tasks)
+                .service(get_teacher_attendance)
+                .service(post_teacher_attendance)
+                .service(put_teacher_attendance)
+                .service(delete_teacher_attendance)
+                .service(get_teacher_marks)
+                .service(post_teacher_marks)
+                .service(put_teacher_marks)
+                .service(delete_teacher_marks)
+                .service(get_teacher_meetings)
+                .service(get_teacher_profile)
+                .service(get_teacher_subjects)
+                .service(get_teacher_students)
+                .service(get_teacher_tasks)
             )        
             .service(
                 web::scope("/student")   

@@ -1,4 +1,4 @@
-use crate::{entities::{ accounts,  students, users}, models::*, STUDENT_ROLE_ID};
+use crate::{entities::{ accounts,  students, users}, STUDENT_ROLE_ID};
 use actix_web::{get,post,put,delete, web, HttpResponse, Responder};
 use validator::Validate;
 
@@ -51,7 +51,7 @@ pub async fn get_admin_students(pool: web::Data<DatabaseConnection>)-> impl Resp
 
 
 #[post("/students")]
-pub async fn post_admin_students(pool: web::Data<DatabaseConnection>,data: web::Json<Student>)-> impl Responder {
+pub async fn post_admin_students(pool: web::Data<DatabaseConnection>,data: web::Json<students::Student>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -95,7 +95,7 @@ pub async fn post_admin_students(pool: web::Data<DatabaseConnection>,data: web::
 }
 
 #[put("/students")]
-pub async fn put_admin_students(pool: web::Data<DatabaseConnection>,data: web::Json<StudentPassLess>)-> impl Responder {
+pub async fn put_admin_students(pool: web::Data<DatabaseConnection>,data: web::Json<students::StudentPassLess>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -135,7 +135,7 @@ pub async fn put_admin_students(pool: web::Data<DatabaseConnection>,data: web::J
 }
 
 #[delete("/students")]
-pub async fn delete_admin_students(pool: web::Data<DatabaseConnection>,data: web::Json<StudentId>)-> impl Responder {
+pub async fn delete_admin_students(pool: web::Data<DatabaseConnection>,data: web::Json<students::StudentId>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()

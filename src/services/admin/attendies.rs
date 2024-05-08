@@ -1,7 +1,7 @@
 
-use crate::{entities::{students, subjects, subjects_attendies, users}, models::*};
+use crate::entities::{students, subjects, subjects_attendies, users};
 use actix_web::{get,post,delete, web, HttpResponse, Responder};
-use sea_orm::{query::*, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, RelationTrait, Set, TransactionTrait, Unchanged};
+use sea_orm::{query::*, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, RelationTrait, TransactionTrait};
 use sea_query::Expr;
 use validator::Validate;
 
@@ -72,7 +72,7 @@ pub async fn get_admin_attendies(pool: web::Data<DatabaseConnection>)-> impl Res
 
 
 #[post("/attendies")]
-pub async fn post_admin_attendies(pool: web::Data<DatabaseConnection>,data: web::Json<SubjectsAttendie>)-> impl Responder {
+pub async fn post_admin_attendies(pool: web::Data<DatabaseConnection>,data: web::Json<subjects_attendies::Model>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -83,14 +83,7 @@ pub async fn post_admin_attendies(pool: web::Data<DatabaseConnection>,data: web:
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
              
-    
-    let new_subjects_attendies = subjects_attendies::ActiveModel{
-        student_id: Set(data.student_id.clone()),
-        subject_id: Set(data.subject_id),
-    };
-
-    let insert_result = new_subjects_attendies.insert(&transaction).await;
-
+    let insert_result = data.to_owned().into_active_model().insert(&transaction).await;
 
     match insert_result{
         Ok(_) =>{
@@ -134,7 +127,7 @@ pub async fn post_admin_attendies(pool: web::Data<DatabaseConnection>,data: web:
 // }
 
 #[delete("/attendies")]
-pub async fn delete_admin_attendies(pool: web::Data<DatabaseConnection>,data: web::Json<SubjectsAttendie>)-> impl Responder {
+pub async fn delete_admin_attendies(pool: web::Data<DatabaseConnection>,data: web::Json<subjects_attendies::Model>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -145,12 +138,8 @@ pub async fn delete_admin_attendies(pool: web::Data<DatabaseConnection>,data: we
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
 
-    let new_subjects_attendies = subjects_attendies::ActiveModel{
-        student_id: Unchanged(data.student_id.clone()),
-        subject_id: Unchanged(data.subject_id)
-    };
-    
-    let delete_result = new_subjects_attendies.delete(&transaction).await;
+   
+    let delete_result = data.to_owned().into_active_model().delete(&transaction).await;
     
     match delete_result{
         Ok(_) =>{

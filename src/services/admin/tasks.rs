@@ -1,7 +1,7 @@
 
-use crate::{entities::{assignments, subjects}, models::*};
+use crate::entities::{assignments, subjects};
 use actix_web::{get,post,put,delete, web, HttpResponse, Responder};
-use sea_orm::{query::*, ActiveModelTrait, ActiveValue::NotSet, DatabaseConnection, EntityTrait, RelationTrait, Set, TransactionTrait, Unchanged};
+use sea_orm::{query::*, ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel, RelationTrait, Set, TransactionTrait};
 use validator::Validate;
 
 
@@ -52,7 +52,7 @@ pub async fn get_admin_tasks(pool: web::Data<DatabaseConnection>)-> impl Respond
 
 
 #[post("/tasks")]
-pub async fn post_admin_tasks(pool: web::Data<DatabaseConnection>,data: web::Json<AssignmentIdLess>)-> impl Responder {
+pub async fn post_admin_tasks(pool: web::Data<DatabaseConnection>,data: web::Json<assignments::ModelIdLess>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -63,16 +63,7 @@ pub async fn post_admin_tasks(pool: web::Data<DatabaseConnection>,data: web::Jso
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
              
-    let new_assignment = assignments::ActiveModel{
-        id: NotSet,
-        name: Set(data.name.clone()),
-        subject_id: Set(data.subject_id),
-        description: Set(data.description.clone()),
-        due_to: Set(data.due_to),
-        max_point: Set(data.max_point)
-    };
-
-    let insert_result = new_assignment.insert(&transaction).await;
+    let insert_result = data.to_owned().into_active_model().insert(&transaction).await;
 
     match insert_result{
         Ok(_) =>{
@@ -85,7 +76,7 @@ pub async fn post_admin_tasks(pool: web::Data<DatabaseConnection>,data: web::Jso
 }
 
 #[put("/tasks")]
-pub async fn put_admin_tasks(pool: web::Data<DatabaseConnection>,data: web::Json<Assignment>)-> impl Responder {
+pub async fn put_admin_tasks(pool: web::Data<DatabaseConnection>,data: web::Json<assignments::Model>)-> impl Responder {
     
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -96,17 +87,16 @@ pub async fn put_admin_tasks(pool: web::Data<DatabaseConnection>,data: web::Json
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
 
-    let new_assignment = assignments::ActiveModel{
-        id: Unchanged(data.id),
-        name: Set(data.name.clone()),
-        subject_id: Unchanged(data.subject_id),
-        description: Set(data.description.clone()),
-        due_to: Set(data.due_to),
-        max_point: Set(data.max_point)
-    };
+        
+    let mut new_object = data.to_owned().into_active_model();
     
-    let update_result = new_assignment.update(&transaction).await;
-    
+    new_object.name = Set(data.name.to_owned());
+    new_object.description = Set(data.description.to_owned());
+    new_object.due_to = Set(data.due_to);
+    new_object.max_point = Set(data.max_point);
+
+    let update_result = new_object.update(&transaction).await;
+        
     match update_result{
         Ok(_) =>{
             _ = transaction.commit().await;
@@ -118,7 +108,7 @@ pub async fn put_admin_tasks(pool: web::Data<DatabaseConnection>,data: web::Json
 }
 
 #[delete("/tasks")]
-pub async fn delete_admin_tasks(pool: web::Data<DatabaseConnection>,data: web::Json<AssignmentId>)-> impl Responder {
+pub async fn delete_admin_tasks(pool: web::Data<DatabaseConnection>,data: web::Json<assignments::ModelId>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -129,7 +119,8 @@ pub async fn delete_admin_tasks(pool: web::Data<DatabaseConnection>,data: web::J
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
    
-    let delete_result = assignments::Entity::delete_by_id(data.id).exec(&transaction).await;
+
+    let delete_result = data.to_owned().into_active_model().delete(&transaction).await;
     
     match delete_result{
         Ok(_) =>{

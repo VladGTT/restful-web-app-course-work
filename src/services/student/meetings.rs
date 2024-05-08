@@ -1,11 +1,11 @@
-use crate::{models::*, entities::{prelude,meetings,attended_meetings}};
+use crate::entities::{accounts::Model as Account, attended_meetings, meetings, subjects};
 use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use sea_orm::{query::*, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, TransactionTrait};
 
 
 
 #[get("/meetings")]
-pub async fn get_student_meetings(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<StudentSubjectQuery>)-> impl Responder {
+pub async fn get_student_meetings(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<subjects::ModelQuery>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -28,12 +28,12 @@ pub async fn get_student_meetings(req: HttpRequest,pool: web::Data<DatabaseConne
     //     attended_meetings am ON am.meeting_id = m.id
     // WHERE am.student_id = ? AND am.subject_id = ?
     
-    let result =  prelude::AttendedMeetings::find()
-    .column_as(attended_meetings::Column::Percentage, "attendance")
-    .join(JoinType::LeftJoin,meetings::Relation::AttendedMeetings.def())
+    let result =  attended_meetings::Entity::find()
+        .column_as(attended_meetings::Column::Percentage, "attendance")
+        .join(JoinType::LeftJoin,meetings::Relation::AttendedMeetings.def())
         .filter(
             Condition::all()
-                .add(attended_meetings::Column::StudentId.eq(account.login.clone()))   
+                .add(attended_meetings::Column::StudentId.eq(account.email.clone()))   
                 .add(attended_meetings::Column::SubjectId.eq(query.subject_id))   
         )
         .into_json()

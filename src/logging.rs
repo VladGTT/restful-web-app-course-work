@@ -6,8 +6,6 @@ use actix_web::{
 use futures_util::future::LocalBoxFuture;
 use sea_orm::{ ActiveModelTrait, ActiveValue::NotSet, DatabaseConnection, Set};
 use crate::entities::logs;
-use futures::executor::block_on;
-
 
 pub struct Logger{
     pool: DatabaseConnection
@@ -66,10 +64,13 @@ where
             description: Set(format!("Path: {}, Method: {}, Addr: {:?}",http_req.path(),http_req.head().method,http_req.peer_addr())) 
         }; 
 
-        _ = block_on(new_entry.insert(&self.pool));
-                               
+        let pool_copy = self.pool.clone(); 
+
         let fut = self.service.call(ServiceRequest::from_parts(http_req, payload));
         Box::pin(async move {
+
+            _ = new_entry.insert(&pool_copy).await;
+
             let res = fut.await?;                                  
             Ok(res.map_into_left_body())
         })

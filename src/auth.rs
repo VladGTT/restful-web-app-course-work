@@ -1,6 +1,6 @@
 use jwt_simple::prelude::*;
 use actix_web::{http::header::AUTHORIZATION, HttpMessage, HttpRequest};
-use crate::models::*;
+use crate::entities::accounts::Model as Account;
 
 pub fn tokenize(data: Account,raw_key: &[u8])->String{
 
@@ -18,7 +18,7 @@ pub fn verify_token(token: &str,raw_key: &[u8])->Result<Account,()>{
     match claims{
         Ok(data)=>{
             Ok(Account{
-                login: data.custom.login, 
+                email: data.custom.email, 
                 password: data.custom.password,
                 role: data.custom.role
             })

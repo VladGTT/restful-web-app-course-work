@@ -1,4 +1,4 @@
-use crate::{entities::{ accounts,  students, users}, models::*, STUDENT_ROLE_ID};
+use crate::{entities::{ accounts,  students, users,teachers}, STUDENT_ROLE_ID};
 use actix_web::{get,post,put,delete, web, HttpResponse, Responder};
 use validator::Validate;
 
@@ -51,7 +51,7 @@ pub async fn get_admin_teachers(pool: web::Data<DatabaseConnection>)-> impl Resp
 
 
 #[post("/teachers")]
-pub async fn post_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::Json<Student>)-> impl Responder {
+pub async fn post_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::Json<teachers::Teacher>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -63,9 +63,9 @@ pub async fn post_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::
     };
 
     
-    let new_student = students::ActiveModel{
+    let new_teacher = teachers::ActiveModel{
         email: Set(data.email.clone()),
-        group: Set(data.group.clone())
+        occupation: Set(data.occupation.clone())
     };
     let new_user = users::ActiveModel{
         email: Set(data.email.clone()),
@@ -82,7 +82,7 @@ pub async fn post_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::
 
     let mut result: Result<(),()> = new_account.insert(&transaction).await.map_or(Err(()),|_|Ok(()));
     result = result.and(new_user.insert(&transaction).await.map_or(Err(()),|_|Ok(())));
-    result = result.and(new_student.insert(&transaction).await.map_or(Err(()),|_|Ok(())));
+    result = result.and(new_teacher.insert(&transaction).await.map_or(Err(()),|_|Ok(())));
 
     match result{
         Ok(_) =>{
@@ -95,7 +95,7 @@ pub async fn post_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::
 }
 
 #[put("/teachers")]
-pub async fn put_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::Json<StudentPassLess>)-> impl Responder {
+pub async fn put_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::Json<teachers::TeacherPassLess>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
@@ -107,9 +107,9 @@ pub async fn put_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::J
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
     
-    let new_student = students::ActiveModel{
+    let new_teacher = teachers::ActiveModel{
         email: Unchanged(data.email.clone()),
-        group: Set(data.group.clone())
+        occupation: Set(data.occupation.clone())
     };
 
     let new_user = users::ActiveModel{
@@ -121,7 +121,7 @@ pub async fn put_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::J
     
 
     let mut result: Result<(),()> = new_user.insert(&transaction).await.map_or(Err(()),|_|Ok(()));
-    result = result.and(new_student.insert(&transaction).await.map_or(Err(()),|_|Ok(())));
+    result = result.and(new_teacher.insert(&transaction).await.map_or(Err(()),|_|Ok(())));
 
     match result{
         Ok(_) =>{
@@ -135,7 +135,7 @@ pub async fn put_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::J
 }
 
 #[delete("/teachers")]
-pub async fn delete_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::Json<TeacherId>)-> impl Responder {
+pub async fn delete_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::Json<teachers::TeacherId>)-> impl Responder {
 
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()

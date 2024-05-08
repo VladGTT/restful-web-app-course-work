@@ -1,4 +1,4 @@
-use crate::{entities::logs, models::*};
+use crate::entities::logs;
 use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::{query::*, DatabaseConnection, EntityTrait, TransactionTrait};
 

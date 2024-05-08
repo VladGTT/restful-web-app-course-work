@@ -1,11 +1,11 @@
-use crate::{entities::{prelude, subjects, subjects_attendies, teachers, users}, models::*};
+use crate::entities::{accounts::Model as Account, subjects, subjects_attendies, teachers, users};
 use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use sea_orm::{query::*, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, TransactionTrait};
 
 
 
 #[get("/teachers")]
-pub async fn get_student_teachers(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<StudentSubjectQuery>)-> impl Responder {
+pub async fn get_student_teachers(req: HttpRequest,pool: web::Data<DatabaseConnection>,query: web::Query<subjects::ModelQuery>)-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,
@@ -35,7 +35,7 @@ pub async fn get_student_teachers(req: HttpRequest,pool: web::Data<DatabaseConne
     };
 
 
-    let result = prelude::Teachers::find()
+    let result = teachers::Entity::find()
         .select_only()
         .columns(
             [
@@ -46,12 +46,12 @@ pub async fn get_student_teachers(req: HttpRequest,pool: web::Data<DatabaseConne
         )
         .column(teachers::Column::Occupation)
         .column_as(subjects::Column::Name, "subject_name")
-        .join(JoinType::InnerJoin, users::Relation::Teachers.def().rev())
-        .join(JoinType::InnerJoin, subjects::Relation::Teachers.def().rev())
-        .join(JoinType::InnerJoin, subjects_attendies::Relation::Subjects.def().rev())
+        .join(JoinType::InnerJoin, teachers::Relation::Users.def())
+        .join(JoinType::InnerJoin, teachers::Relation::Subjects.def())
+        .join(JoinType::InnerJoin, subjects::Relation::SubjectsAttendies.def())
         .filter(
             Condition::any()
-               .add(subjects_attendies::Column::StudentId.eq(account.login.clone()))
+               .add(subjects_attendies::Column::StudentId.eq(account.email.clone()))
                .add(subjects_attendies::Column::SubjectId.eq(query.subject_id))
         )
         .into_json()
