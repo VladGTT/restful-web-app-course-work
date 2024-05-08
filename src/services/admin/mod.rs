@@ -7,4 +7,5 @@ pub mod marks;
 pub mod attendance;
 pub mod meetings;
 pub mod logs;
+pub mod db;
 
