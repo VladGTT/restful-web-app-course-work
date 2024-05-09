@@ -2,7 +2,6 @@
 use std::{env, time::Duration};
 use sea_orm::{DatabaseConnection,ConnectOptions,Database};
 use actix_web::{web,App, HttpServer};
-use services::teacher::{marks::{delete_teacher_marks, get_teacher_marks, post_teacher_marks, put_teacher_marks}, meetings::get_teacher_meetings, profile::get_teacher_profile, students::get_teacher_students, subjects::get_teacher_subjects, tasks::get_teacher_tasks};
 use crate::services::{
     auth as Auth,
     student::{
@@ -11,9 +10,29 @@ use crate::services::{
         subjects::get_student_subjects,
         tasks::get_student_tasks,
         teachers::get_student_teachers,
+        //stats
     },
-    teacher:: {
-        attendance::{delete_teacher_attendance, get_teacher_attendance, post_teacher_attendance, put_teacher_attendance}
+    teacher::{
+        attendance::{delete_teacher_attendance, get_teacher_attendance, post_teacher_attendance, put_teacher_attendance},
+        marks::{delete_teacher_marks,get_teacher_marks,post_teacher_marks,put_teacher_marks},
+        meetings::get_teacher_meetings,
+        //stats
+        profile::{get_teacher_profile,update_teacher_profile},
+        students::get_teacher_students,
+        subjects::get_teacher_subjects,
+        tasks::get_teacher_tasks,
+    },
+    admin::{
+        attendance::{get_admin_attendance,delete_admin_attendance,post_admin_attendance,put_admin_attendance},
+        attendies::{delete_admin_attendies,get_admin_attendies,post_admin_attendies},
+        db::post_admin_db_action,
+        logs::get_admin_logs,
+        marks::{delete_admin_marks,get_admin_marks,post_admin_marks,put_admin_marks},
+        meetings::{delete_admin_meetings,get_admin_meetings,post_admin_meetings,put_admin_meetings},
+        students::{delete_admin_students,get_admin_students,post_admin_students,put_admin_students},
+        subjects::{delete_admin_subjects,get_admin_subjects,post_admin_subjects,put_admin_subjects},
+        tasks::{delete_admin_tasks,get_admin_tasks,post_admin_tasks,put_admin_tasks},
+        teachers::{delete_admin_teachers,get_admin_teachers,post_admin_teachers,put_admin_teachers}
     }
 };
 use crate::logging::Logger;
@@ -78,6 +97,7 @@ async fn main() -> std::io::Result<()> {
                 .service(delete_teacher_marks)
                 .service(get_teacher_meetings)
                 .service(get_teacher_profile)
+                .service(update_teacher_profile)
                 .service(get_teacher_subjects)
                 .service(get_teacher_students)
                 .service(get_teacher_tasks)
@@ -91,9 +111,43 @@ async fn main() -> std::io::Result<()> {
                 .service(get_student_meetings)
                 .service(get_student_teachers)
             )
-            // .service(
-            //     web::scope("/admin")
-            // )
+            .service(
+                web::scope("/admin")
+                .wrap(auth::Authentication::new(ADMIN_ROLE_ID))
+                .service(get_admin_attendance)
+                .service(delete_admin_attendance)
+                .service(post_admin_attendance)
+                .service(put_admin_attendance)
+                .service(get_admin_attendies)
+                .service(delete_admin_attendies)
+                .service(post_admin_attendies)
+                .service(post_admin_db_action)
+                .service(get_admin_logs)
+                .service(get_admin_marks)
+                .service(delete_admin_marks)
+                .service(post_admin_marks)
+                .service(put_admin_marks)
+                .service(get_admin_meetings)
+                .service(delete_admin_meetings)
+                .service(post_admin_meetings)
+                .service(put_admin_meetings)
+                .service(get_admin_students)
+                .service(delete_admin_students)
+                .service(post_admin_students)
+                .service(put_admin_students)
+                .service(get_admin_subjects)
+                .service(delete_admin_subjects)
+                .service(post_admin_subjects)
+                .service(put_admin_subjects)
+                .service(get_admin_tasks)
+                .service(delete_admin_tasks)
+                .service(post_admin_tasks)
+                .service(put_admin_tasks)
+                .service(get_admin_teachers)
+                .service(delete_admin_teachers)
+                .service(post_admin_teachers)
+                .service(put_admin_teachers)
+            )
         )
     })
     .bind("127.0.0.1:8080")?
