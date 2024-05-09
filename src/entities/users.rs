@@ -18,8 +18,8 @@ pub enum Relation {
         belongs_to = "super::accounts::Entity",
         from = "Column::Email",
         to = "super::accounts::Column::Email",
-        on_update = "NoAction",
-        on_delete = "NoAction"
+        on_update = "Cascade",
+        on_delete = "Cascade"
     )]
     Accounts,
     #[sea_orm(has_one = "super::students::Entity")]

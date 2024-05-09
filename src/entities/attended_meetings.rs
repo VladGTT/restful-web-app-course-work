@@ -34,16 +34,16 @@ pub enum Relation {
         belongs_to = "super::meetings::Entity",
         from = "Column::MeetingId",
         to = "super::meetings::Column::Id",
-        on_update = "NoAction",
-        on_delete = "NoAction"
+        on_update = "Cascade",
+        on_delete = "Cascade"
     )]
     Meetings,
     #[sea_orm(
         belongs_to = "super::subjects_attendies::Entity",
         from = "(Column::StudentId, Column::SubjectId)",
         to = "(super::subjects_attendies::Column::StudentId, super::subjects_attendies::Column::SubjectId)",
-        on_update = "NoAction",
-        on_delete = "NoAction"
+        on_update = "Cascade",
+        on_delete = "Cascade"
     )]
     SubjectsAttendies,
 }

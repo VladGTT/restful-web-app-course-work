@@ -48,8 +48,8 @@ pub enum Relation {
         belongs_to = "super::users::Entity",
         from = "Column::Email",
         to = "super::users::Column::Email",
-        on_update = "NoAction",
-        on_delete = "NoAction"
+        on_update = "Cascade",
+        on_delete = "Cascade"
     )]
     Users,
 }

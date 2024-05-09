@@ -37,8 +37,8 @@ pub enum Relation {
         belongs_to = "super::subjects::Entity",
         from = "Column::SubjectId",
         to = "super::subjects::Column::Id",
-        on_update = "NoAction",
-        on_delete = "NoAction"
+        on_update = "Cascade",
+        on_delete = "Cascade"
     )]
     Subjects,
 }

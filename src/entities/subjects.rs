@@ -14,7 +14,7 @@ pub struct Model {
     pub description: String,
     pub semestr: Option<i32>,
     #[validate(email)]
-    pub teacher_id: String,
+    pub teacher_id: Option<String>,
 }
 
 #[derive(Clone,Deserialize,Validate,DeriveIntoActiveModel)]
@@ -23,7 +23,7 @@ pub struct ModelIdLess{
     pub description: String,
     pub semestr: Option<i32>,
     #[validate(email)]
-    pub teacher_id: String
+    pub teacher_id: Option<String>
 }
 
 #[derive(Clone,Deserialize,Validate,DeriveIntoActiveModel)]
@@ -51,8 +51,8 @@ pub enum Relation {
         belongs_to = "super::teachers::Entity",
         from = "Column::TeacherId",
         to = "super::teachers::Column::Email",
-        on_update = "NoAction",
-        on_delete = "NoAction"
+        on_update = "Cascade",
+        on_delete = "SetNull"
     )]
     Teachers,
 }
