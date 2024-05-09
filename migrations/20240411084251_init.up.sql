@@ -86,29 +86,29 @@ CREATE TABLE IF NOT EXISTS `meetings` (
   `time` datetime NOT NULL
 );
 
-ALTER TABLE `meetings` ADD FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`);
+ALTER TABLE `meetings` ADD FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `assignments` ADD FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`);
+ALTER TABLE `assignments` ADD FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `attended_meetings` ADD FOREIGN KEY (`meeting_id`) REFERENCES `meetings` (`id`);
+ALTER TABLE `attended_meetings` ADD FOREIGN KEY (`meeting_id`) REFERENCES `meetings` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `assignments_marks` ADD FOREIGN KEY (`assignment_id`) REFERENCES `assignments` (`id`);
+ALTER TABLE `assignments_marks` ADD FOREIGN KEY (`assignment_id`) REFERENCES `assignments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `subjects` ADD FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`email`);
+ALTER TABLE `subjects` ADD FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`email`) ON UPDATE CASCADE ON DELETE SET NULL;
 
-ALTER TABLE `subjects_attendies` ADD FOREIGN KEY (`student_id`) REFERENCES `students` (`email`);
+ALTER TABLE `subjects_attendies` ADD FOREIGN KEY (`student_id`) REFERENCES `students` (`email`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `subjects_attendies` ADD FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`);
+ALTER TABLE `subjects_attendies` ADD FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `attended_meetings` ADD FOREIGN KEY (`student_id`, `subject_id`) REFERENCES `subjects_attendies` (`student_id`, `subject_id`);
+ALTER TABLE `attended_meetings` ADD FOREIGN KEY (`student_id`, `subject_id`) REFERENCES `subjects_attendies` (`student_id`, `subject_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `assignments_marks` ADD FOREIGN KEY (`student_id`, `subject_id`) REFERENCES `subjects_attendies` (`student_id`, `subject_id`);
+ALTER TABLE `assignments_marks` ADD FOREIGN KEY (`student_id`, `subject_id`) REFERENCES `subjects_attendies` (`student_id`, `subject_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `users` ADD FOREIGN KEY (`email`) REFERENCES `accounts` (`email`);
+ALTER TABLE `users` ADD FOREIGN KEY (`email`) REFERENCES `accounts` (`email`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `teachers` ADD FOREIGN KEY (`email`) REFERENCES `users` (`email`);
+ALTER TABLE `teachers` ADD FOREIGN KEY (`email`) REFERENCES `users` (`email`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `students` ADD FOREIGN KEY (`email`) REFERENCES `users` (`email`);
+ALTER TABLE `students` ADD FOREIGN KEY (`email`) REFERENCES `users` (`email`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 
 
