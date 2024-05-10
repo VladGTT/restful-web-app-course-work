@@ -56,7 +56,7 @@ pub async fn get_teacher_profile(req: HttpRequest,pool: web::Data<DatabaseConnec
 }
 
 #[put("/profile")]
-pub async fn update_teacher_profile(req: HttpRequest,pool: web::Data<DatabaseConnection>, data: Json<accounts::ModelPass> )-> impl Responder {
+pub async fn put_teacher_profile(req: HttpRequest,pool: web::Data<DatabaseConnection>, data: Json<accounts::ModelPass> )-> impl Responder {
     let ext = req.extensions();
     let account = match ext.get::<Account>(){
         Some(acc) => acc,

@@ -8,4 +8,5 @@ pub mod attendance;
 pub mod meetings;
 pub mod logs;
 pub mod db;
+pub mod profile;
 

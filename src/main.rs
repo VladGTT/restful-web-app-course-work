@@ -6,7 +6,7 @@ use crate::services::{
     auth as Auth,
     student::{
         meetings::get_student_meetings,
-        profile::get_student_profile,
+        profile::{get_student_profile,put_student_profile},
         subjects::get_student_subjects,
         tasks::get_student_tasks,
         teachers::get_student_teachers,
@@ -17,7 +17,7 @@ use crate::services::{
         marks::{delete_teacher_marks,get_teacher_marks,post_teacher_marks,put_teacher_marks},
         meetings::get_teacher_meetings,
         //stats
-        profile::{get_teacher_profile,update_teacher_profile},
+        profile::{get_teacher_profile,put_teacher_profile},
         students::get_teacher_students,
         subjects::get_teacher_subjects,
         tasks::get_teacher_tasks,
@@ -32,7 +32,8 @@ use crate::services::{
         students::{delete_admin_students,get_admin_students,post_admin_students,put_admin_students},
         subjects::{delete_admin_subjects,get_admin_subjects,post_admin_subjects,put_admin_subjects},
         tasks::{delete_admin_tasks,get_admin_tasks,post_admin_tasks,put_admin_tasks},
-        teachers::{delete_admin_teachers,get_admin_teachers,post_admin_teachers,put_admin_teachers}
+        teachers::{delete_admin_teachers,get_admin_teachers,post_admin_teachers,put_admin_teachers},
+        profile::{get_admin_profile,put_admin_profile}
     }
 };
 use crate::logging::Logger;
@@ -97,7 +98,7 @@ async fn main() -> std::io::Result<()> {
                 .service(delete_teacher_marks)
                 .service(get_teacher_meetings)
                 .service(get_teacher_profile)
-                .service(update_teacher_profile)
+                .service(put_teacher_profile)
                 .service(get_teacher_subjects)
                 .service(get_teacher_students)
                 .service(get_teacher_tasks)
@@ -107,6 +108,7 @@ async fn main() -> std::io::Result<()> {
                 .wrap(auth::Authentication::new(STUDENT_ROLE_ID))
                 .service(get_student_subjects)
                 .service(get_student_profile)
+                .service(put_student_profile)
                 .service(get_student_tasks)
                 .service(get_student_meetings)
                 .service(get_student_teachers)
@@ -147,6 +149,8 @@ async fn main() -> std::io::Result<()> {
                 .service(delete_admin_teachers)
                 .service(post_admin_teachers)
                 .service(put_admin_teachers)
+                .service(get_admin_profile)
+                .service(put_admin_profile)
             )
         )
     })
