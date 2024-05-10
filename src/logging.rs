@@ -69,9 +69,10 @@ where
         let fut = self.service.call(ServiceRequest::from_parts(http_req, payload));
         Box::pin(async move {
 
+            
+            let res = fut.await?;  
             _ = new_entry.insert(&pool_copy).await;
-
-            let res = fut.await?;                                  
+            
             Ok(res.map_into_left_body())
         })
     }
