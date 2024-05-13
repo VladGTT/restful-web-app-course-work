@@ -2,6 +2,7 @@
 use std::{env, time::Duration};
 use sea_orm::{DatabaseConnection,ConnectOptions,Database};
 use actix_web::{web,App, HttpServer};
+use actix_cors::Cors;
 use crate::services::{
     auth as Auth,
     student::{
@@ -75,11 +76,16 @@ async fn main() -> std::io::Result<()> {
 
 
     HttpServer::new(move || {
-        App::new()
-        .app_data({
-            actix_web::web::Data::new(pool.clone())
-        })
         
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allow_any_method()
+            .allow_any_header();
+            
+
+        App::new()
+        .app_data(actix_web::web::Data::new(pool.clone()))
+        .wrap(cors)
         .wrap(Logger::new(pool.clone()))
         .service(Auth::login)        
         .service(
