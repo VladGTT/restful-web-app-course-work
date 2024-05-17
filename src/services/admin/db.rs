@@ -1,5 +1,5 @@
 
-use actix_web::{post, web::{self, Json}, HttpResponse, Responder};
+use actix_web::{get, post, web::{self, Json, Query}, HttpResponse, Responder};
 use sea_orm::{query::*,DatabaseConnection, DatabaseTransaction, DbErr, TransactionTrait};
 use serde::Deserialize;
 
@@ -35,6 +35,69 @@ async fn import_table(tx: &DatabaseTransaction,table_name: String, in_filename: 
 // ENCLOSED BY '"'
 // LINES TERMINATED BY '\n'
 // IGNORE 1 ROWS;
+
+#[get("/db/status")]
+pub async fn get_admin_db_status(data: Query<DbParams>)->impl Responder{
+
+    let result: Result<(), ()> =  match data.to_owned().action{
+        DbAction::Archive=>{
+            // docker exec some-mysql ls /var/lib/mysql-files/ | grep .csv
+            let output: Result<String, ()> = Command::new("docker")
+                .args(["exec","some-mysql","ls","/var/lib/mysql-files/","|","grep","archive.csv"])
+                .output()
+                .map_err(|_|())
+                .and_then::<String,_>(|val|{
+                    Ok(String::from_utf8_lossy(&val.stdout).to_string())
+                });               
+            
+            output.and_then(|val|{
+                let mut res = true;
+                for i in ["subjects","logs","subjects_attendies","assignments","assignments_marks","attended_meetings","meetings"]{
+                    res &= val.contains(&format!("{}-archive.csv",i));    
+                }
+                if res{
+                    Ok(())
+                } else {
+                    Err(())
+                }    
+            })            
+        }
+        DbAction::Clone=>{
+            let output: Result<String, ()> = Command::new("docker")
+                .args(["exec","some-mysql","ls","/var/lib/mysql-files/","|","grep","copy.csv"])
+                .output()
+                .map_err(|_|())
+                .and_then::<String,_>(|val|{
+                    Ok(String::from_utf8_lossy(&val.stdout).to_string())
+                });                            
+            
+            output.and_then(|val|{
+                let mut res = true;
+                for i in ["logs","accounts","assignments","assignments_marks","attended_meetings","meetings","students","subjects","subjects_attendies","teachers","users"]{
+                    res &= val.contains(&format!("{}-copy.csv",i));    
+                }
+                if res{
+                    Ok(())
+                } else {
+                    Err(())
+                }    
+            })
+        }
+        _=>Ok(())
+    };
+
+    match result {
+        Ok(_)=>{
+            HttpResponse::Ok().finish()        
+        }
+        Err(_) => {
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+
+
 
 #[post("/db")]
 pub async fn post_admin_db_action(pool: web::Data<DatabaseConnection>,data: Json<DbParams>)-> impl Responder {
@@ -106,7 +169,10 @@ pub async fn post_admin_db_action(pool: web::Data<DatabaseConnection>,data: Json
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }
 

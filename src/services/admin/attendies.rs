@@ -29,30 +29,16 @@ pub async fn get_admin_attendies(pool: web::Data<DatabaseConnection>)-> impl Res
 
     let result = subjects_attendies::Entity::find()
         .select_only()
-        .column_as(
-            Expr::cust_with_values(
-                "CONCAT_WS(' ',?,?,?)",
-                [
-                    format!(
-                        "{}.{}",
-                        users::Column::Firstname.as_column_ref().0.to_string(),
-                        users::Column::Firstname.as_column_ref().1.to_string(),
-                    ),
-                    format!(
-                        "{}.{}",
-                        users::Column::Secondname.as_column_ref().0.to_string(),
-                        users::Column::Secondname.as_column_ref().1.to_string(),
-                    ),
-                    format!(
-                        "{}.{}",
-                        users::Column::Lastname.as_column_ref().0.to_string(),
-                        users::Column::Lastname.as_column_ref().1.to_string(),
-                    )
-                ]
-            ),
-            "student_fullname"
-        )
-        .column(students::Column::Group)
+        .columns([
+            users::Column::Email,
+            users::Column::Firstname,
+            users::Column::Secondname,
+            users::Column::Lastname,
+        ])
+        .columns([
+            subjects::Column::Id,
+            subjects::Column::Name,
+        ])
         .join(JoinType::LeftJoin, students::Relation::SubjectsAttendies.def().rev())
         .join(JoinType::LeftJoin, subjects::Relation::SubjectsAttendies.def().rev())
         .join(JoinType::InnerJoin, users::Relation::Students.def().rev())
@@ -90,7 +76,10 @@ pub async fn post_admin_attendies(pool: web::Data<DatabaseConnection>,data: web:
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
      
 }
@@ -146,7 +135,10 @@ pub async fn delete_admin_attendies(pool: web::Data<DatabaseConnection>,data: we
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 

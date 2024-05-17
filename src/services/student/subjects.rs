@@ -1,7 +1,6 @@
-use crate::entities::{accounts::Model as Account,subjects,subjects_attendies,users,teachers};
+use crate::entities::{accounts::Model as Account,subjects,subjects_attendies,teachers};
 use actix_web::{get, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use sea_orm::{query:: *, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, RelationTrait, TransactionTrait};
-use sea_orm::sea_query::Expr;
 
 #[get("/subjects")]
 pub async fn get_student_subjects(req: HttpRequest,pool: web::Data<DatabaseConnection>)-> impl Responder {
@@ -43,29 +42,29 @@ pub async fn get_student_subjects(req: HttpRequest,pool: web::Data<DatabaseConne
                 subjects::Column::Semestr
             ]
         )
-        .column_as(
-            Expr::cust_with_values(
-                "CONCAT_WS(' ',?,?,?)",
-                [
-                    format!(
-                        "{}.{}",
-                        users::Column::Firstname.as_column_ref().0.to_string(),
-                        users::Column::Firstname.as_column_ref().1.to_string(),
-                    ),
-                    format!(
-                        "{}.{}",
-                        users::Column::Secondname.as_column_ref().0.to_string(),
-                        users::Column::Secondname.as_column_ref().1.to_string(),
-                    ),
-                    format!(
-                        "{}.{}",
-                        users::Column::Lastname.as_column_ref().0.to_string(),
-                        users::Column::Lastname.as_column_ref().1.to_string(),
-                    )
-                ]
-            ),
-            "teacher"
-        )
+        // .column_as(
+        //     Expr::cust_with_values(
+        //         "CONCAT_WS(' ',?,?,?)",
+        //         [
+        //             format!(
+        //                 "'{}'.'{}'",
+        //                 users::Column::Firstname.as_column_ref().0.to_string(),
+        //                 users::Column::Firstname.as_column_ref().1.to_string(),
+        //             ),
+        //             format!(
+        //                 "'{}'.'{}'",
+        //                 users::Column::Secondname.as_column_ref().0.to_string(),
+        //                 users::Column::Secondname.as_column_ref().1.to_string(),
+        //             ),
+        //             format!(
+        //                 "'{}'.'{}'",
+        //                 users::Column::Lastname.as_column_ref().0.to_string(),
+        //                 users::Column::Lastname.as_column_ref().1.to_string(),
+        //             )
+        //         ]
+        //     ),
+        //     "teacher"
+        // )
         .column(teachers::Column::Occupation)
         .join(JoinType::InnerJoin, subjects::Relation::SubjectsAttendies.def())
         .join(JoinType::InnerJoin, teachers::Relation::Subjects.def().rev())
@@ -81,6 +80,9 @@ pub async fn get_student_subjects(req: HttpRequest,pool: web::Data<DatabaseConne
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }

@@ -38,20 +38,23 @@ pub async fn get_admin_marks(pool: web::Data<DatabaseConnection>)-> impl Respond
         .select_only()
         .columns(
             [
+                users::Column::Email,
                 users::Column::Firstname,
                 users::Column::Secondname,
                 users::Column::Lastname
             ]
         )
+        .column_as(subjects::Column::Id,"subject_id")
         .column_as(subjects::Column::Name,"subject_name")
+        .column_as(assignments::Column::Id,"assignment_id")
         .column_as(assignments::Column::Name,"assignment_name")
         .column(assignments_marks::Column::Mark)
         .column(assignments::Column::MaxPoint)
-        .join(JoinType::RightJoin, assignments::Relation::AssignmentsMarks.def().rev())
-        .join(JoinType::InnerJoin, subjects::Relation::Assignments.def().rev())
-        .join(JoinType::InnerJoin, subjects_attendies::Relation::AssignmentsMarks.def().rev())
-        .join(JoinType::InnerJoin, students::Relation::SubjectsAttendies.def().rev())
-        .join(JoinType::InnerJoin, users::Relation::Students.def().rev())
+        .join(JoinType::RightJoin, assignments_marks::Relation::Assignments.def())
+        .join(JoinType::InnerJoin, assignments::Relation::Subjects.def())
+        .join(JoinType::InnerJoin, assignments_marks::Relation::SubjectsAttendies.def())
+        .join(JoinType::InnerJoin, subjects_attendies::Relation::Students.def())
+        .join(JoinType::InnerJoin, students::Relation::Users.def())
         .into_json()
         .all(&transaction)
         .await;
@@ -62,7 +65,10 @@ pub async fn get_admin_marks(pool: web::Data<DatabaseConnection>)-> impl Respond
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }
 
@@ -88,7 +94,10 @@ pub async fn post_admin_marks(pool: web::Data<DatabaseConnection>,data: web::Jso
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        } 
     }
 
 }
@@ -113,7 +122,10 @@ pub async fn put_admin_marks(pool: web::Data<DatabaseConnection>,data: web::Json
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 
@@ -137,6 +149,9 @@ pub async fn delete_admin_marks(pool: web::Data<DatabaseConnection>,data: web::J
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }   
 }

@@ -43,7 +43,10 @@ pub async fn get_admin_meetings(pool: web::Data<DatabaseConnection>)-> impl Resp
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }
 
@@ -68,7 +71,10 @@ pub async fn post_admin_meetings(pool: web::Data<DatabaseConnection>,data: web::
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 }
@@ -98,7 +104,10 @@ pub async fn put_admin_meetings(pool: web::Data<DatabaseConnection>,data: web::J
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 
@@ -122,6 +131,9 @@ pub async fn delete_admin_meetings(pool: web::Data<DatabaseConnection>,data: web
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }   
 }

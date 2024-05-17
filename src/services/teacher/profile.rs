@@ -51,7 +51,10 @@ pub async fn get_teacher_profile(req: HttpRequest,pool: web::Data<DatabaseConnec
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }
 
@@ -85,7 +88,10 @@ pub async fn put_teacher_profile(req: HttpRequest,pool: web::Data<DatabaseConnec
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
     
 }

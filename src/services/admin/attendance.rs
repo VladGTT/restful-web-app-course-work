@@ -37,19 +37,22 @@ pub async fn get_admin_attendance(pool: web::Data<DatabaseConnection>)-> impl Re
         .select_only()
         .columns(
             [
+                users::Column::Email,
                 users::Column::Firstname,
                 users::Column::Secondname,
                 users::Column::Lastname
             ]
         )
+        .column_as(subjects::Column::Id,"subject_id")
         .column_as(subjects::Column::Name,"subject_name")
+        .column_as(meetings::Column::Id,"meeting_id")
         .column_as(meetings::Column::Name,"meeting_name")
         .column(attended_meetings::Column::Percentage)
         .join(JoinType::RightJoin, attended_meetings::Relation::Meetings.def())
         .join(JoinType::InnerJoin, subjects::Relation::Meetings.def().rev())
-        .join(JoinType::InnerJoin, subjects_attendies::Relation::AttendedMeetings.def().rev())
-        .join(JoinType::InnerJoin, students::Relation::SubjectsAttendies.def().rev())
-        .join(JoinType::InnerJoin, users::Relation::Students.def().rev())
+        .join(JoinType::InnerJoin, attended_meetings::Relation::SubjectsAttendies.def())
+        .join(JoinType::InnerJoin, subjects_attendies::Relation::Students.def())
+        .join(JoinType::InnerJoin, students::Relation::Users.def())
         .into_json()
         .all(&transaction)
         .await;
@@ -59,7 +62,10 @@ pub async fn get_admin_attendance(pool: web::Data<DatabaseConnection>)-> impl Re
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 
 }
@@ -85,7 +91,10 @@ pub async fn post_admin_attendance(pool: web::Data<DatabaseConnection>,data: web
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
      
 }
@@ -113,7 +122,10 @@ pub async fn put_admin_attendance(pool: web::Data<DatabaseConnection>,data: web:
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     } 
      
 }
@@ -137,7 +149,10 @@ pub async fn delete_admin_attendance(pool: web::Data<DatabaseConnection>,data: w
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 

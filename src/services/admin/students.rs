@@ -27,6 +27,7 @@ pub async fn get_admin_students(pool: web::Data<DatabaseConnection>)-> impl Resp
         .select_only()
         .columns(
             [
+                users::Column::Email,
                 users::Column::Firstname,
                 users::Column::Secondname,
                 users::Column::Lastname,
@@ -44,7 +45,10 @@ pub async fn get_admin_students(pool: web::Data<DatabaseConnection>)-> impl Resp
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }
 
@@ -89,7 +93,10 @@ pub async fn post_admin_students(pool: web::Data<DatabaseConnection>,data: web::
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 }
@@ -120,15 +127,18 @@ pub async fn put_admin_students(pool: web::Data<DatabaseConnection>,data: web::J
     };
     
 
-    let mut result: Result<(),()> = new_user.insert(&transaction).await.map_or(Err(()),|_|Ok(()));
-    result = result.and(new_student.insert(&transaction).await.map_or(Err(()),|_|Ok(())));
+    let mut result: Result<(),()> = new_user.update(&transaction).await.map_or(Err(()),|_|Ok(()));
+    result = result.and(new_student.update(&transaction).await.map_or(Err(()),|_|Ok(())));
 
     match result{
         Ok(_) =>{
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 
@@ -152,6 +162,9 @@ pub async fn delete_admin_students(pool: web::Data<DatabaseConnection>,data: web
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }   
 }

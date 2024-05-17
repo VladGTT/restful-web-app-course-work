@@ -48,7 +48,12 @@ pub async fn get_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnecti
             ]
         )
         .column(assignments::Column::Name)
-        .column(assignments_marks::Column::Mark)
+        .columns([
+            assignments_marks::Column::Mark,
+            assignments_marks::Column::AssignmentId,
+            assignments_marks::Column::StudentId,
+            assignments_marks::Column::SubjectId,   
+        ])
         .join(JoinType::RightJoin, assignments_marks::Relation::Assignments.def())
         .join(JoinType::InnerJoin, assignments::Relation::Subjects.def())
         .join(JoinType::InnerJoin, assignments_marks::Relation::SubjectsAttendies.def())
@@ -69,7 +74,10 @@ pub async fn get_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnecti
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }
 
@@ -115,7 +123,10 @@ pub async fn post_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnect
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        _ => HttpResponse::InternalServerError().finish()
+        _ => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 }
@@ -161,7 +172,10 @@ pub async fn put_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConnecti
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        _ => HttpResponse::InternalServerError().finish()
+        _ => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 
@@ -206,6 +220,9 @@ pub async fn delete_teacher_marks(req: HttpRequest,pool: web::Data<DatabaseConne
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        _ => HttpResponse::InternalServerError().finish()
+        _ => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }   
 }

@@ -21,12 +21,12 @@ use crate::services::{
         profile::{get_teacher_profile,put_teacher_profile},
         students::get_teacher_students,
         subjects::get_teacher_subjects,
-        tasks::get_teacher_tasks,
+        tasks::{get_teacher_tasks,post_teacher_tasks,put_teacher_tasks,delete_teacher_tasks},
     },
     admin::{
         attendance::{get_admin_attendance,delete_admin_attendance,post_admin_attendance,put_admin_attendance},
         attendies::{delete_admin_attendies,get_admin_attendies,post_admin_attendies},
-        db::post_admin_db_action,
+        db::{post_admin_db_action,get_admin_db_status},
         logs::get_admin_logs,
         marks::{delete_admin_marks,get_admin_marks,post_admin_marks,put_admin_marks},
         meetings::{delete_admin_meetings,get_admin_meetings,post_admin_meetings,put_admin_meetings},
@@ -85,8 +85,8 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
         .app_data(actix_web::web::Data::new(pool.clone()))
-        .wrap(cors)
         .wrap(Logger::new(pool.clone()))
+        .wrap(cors)
         .service(Auth::login)        
         .service(
             web::scope("/api")
@@ -108,6 +108,9 @@ async fn main() -> std::io::Result<()> {
                 .service(get_teacher_subjects)
                 .service(get_teacher_students)
                 .service(get_teacher_tasks)
+                .service(post_teacher_tasks)
+                .service(put_teacher_tasks)
+                .service(delete_teacher_tasks)
             )        
             .service(
                 web::scope("/student")   
@@ -130,6 +133,7 @@ async fn main() -> std::io::Result<()> {
                 .service(delete_admin_attendies)
                 .service(post_admin_attendies)
                 .service(post_admin_db_action)
+                .service(get_admin_db_status)
                 .service(get_admin_logs)
                 .service(get_admin_marks)
                 .service(delete_admin_marks)

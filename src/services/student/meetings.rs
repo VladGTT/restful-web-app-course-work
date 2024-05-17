@@ -29,8 +29,14 @@ pub async fn get_student_meetings(req: HttpRequest,pool: web::Data<DatabaseConne
     // WHERE am.student_id = ? AND am.subject_id = ?
     
     let result =  attended_meetings::Entity::find()
+        .select_only()
+        .columns([
+            meetings::Column::Id,
+            meetings::Column::Name,
+            meetings::Column::Time,
+        ])
         .column_as(attended_meetings::Column::Percentage, "attendance")
-        .join(JoinType::LeftJoin,meetings::Relation::AttendedMeetings.def())
+        .join(JoinType::LeftJoin,attended_meetings::Relation::Meetings.def())
         .filter(
             Condition::all()
                 .add(attended_meetings::Column::StudentId.eq(account.email.clone()))   
@@ -45,7 +51,10 @@ pub async fn get_student_meetings(req: HttpRequest,pool: web::Data<DatabaseConne
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 
 }

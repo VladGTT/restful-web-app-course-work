@@ -46,7 +46,7 @@ pub async fn get_student_tasks(req: HttpRequest,pool: web::Data<DatabaseConnecti
         )
         .column(assignments_marks::Column::Mark)   
         .column(assignments::Column::MaxPoint)   
-        .join(JoinType::LeftJoin,assignments::Relation::AssignmentsMarks.def().rev())
+        .join(JoinType::LeftJoin,assignments::Relation::AssignmentsMarks.def())
         .filter(
             Condition::all()
                 .add(assignments_marks::Column::StudentId.eq(account.email.clone()))
@@ -61,7 +61,10 @@ pub async fn get_student_tasks(req: HttpRequest,pool: web::Data<DatabaseConnecti
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        } 
     }
     
 }

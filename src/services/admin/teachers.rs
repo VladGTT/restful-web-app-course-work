@@ -1,4 +1,4 @@
-use crate::{entities::{ accounts,  students, users,teachers}, STUDENT_ROLE_ID};
+use crate::{entities::{ accounts, teachers, users}, STUDENT_ROLE_ID, TEACHER_ROLE_ID};
 use actix_web::{get,post,put,delete, web, HttpResponse, Responder};
 use validator::Validate;
 
@@ -23,17 +23,18 @@ pub async fn get_admin_teachers(pool: web::Data<DatabaseConnection>)-> impl Resp
     // INNER JOIN 
     //     users u ON s.email = u.email
 
-    let result = students::Entity::find()
+    let result = teachers::Entity::find()
         .select_only()
         .columns(
             [
                 users::Column::Firstname,
                 users::Column::Secondname,
                 users::Column::Lastname,
+                users::Column::Email,
             ]
         )
-        .column(students::Column::Group)
-        .join(JoinType::InnerJoin, users::Relation::Students.def().rev())
+        .column(teachers::Column::Occupation)
+        .join(JoinType::InnerJoin, teachers::Relation::Users.def())
         .into_json()
         .all(&transaction)
         .await;
@@ -44,7 +45,10 @@ pub async fn get_admin_teachers(pool: web::Data<DatabaseConnection>)-> impl Resp
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }
 
@@ -77,7 +81,7 @@ pub async fn post_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::
     let new_account = accounts::ActiveModel{
         email: Set(data.email.clone()),
         password: Set(data.password.clone()),
-        role: Set(STUDENT_ROLE_ID),
+        role: Set(TEACHER_ROLE_ID   ),
     };
 
     let mut result: Result<(),()> = new_account.insert(&transaction).await.map_or(Err(()),|_|Ok(()));
@@ -89,7 +93,10 @@ pub async fn post_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 }
@@ -100,7 +107,6 @@ pub async fn put_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::J
     if data.validate().is_err(){
         return HttpResponse::InternalServerError().finish()
     }
-
 
     let transaction = match pool.begin_with_config(Some(sea_orm::IsolationLevel::Serializable), None).await{
         Ok(dat)=> dat,
@@ -119,18 +125,19 @@ pub async fn put_admin_teachers(pool: web::Data<DatabaseConnection>,data: web::J
         lastname: Set(data.lastname.clone())
     };
     
-
-    let mut result: Result<(),()> = new_user.insert(&transaction).await.map_or(Err(()),|_|Ok(()));
-    result = result.and(new_teacher.insert(&transaction).await.map_or(Err(()),|_|Ok(())));
+    let mut result: Result<(),()> = new_user.update(&transaction).await.map_or(Err(()),|_|Ok(()));
+    result = result.and(new_teacher.update(&transaction).await.map_or(Err(()),|_|Ok(())));
 
     match result{
         Ok(_) =>{
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
-
 
 }
 
@@ -152,6 +159,9 @@ pub async fn delete_admin_teachers(pool: web::Data<DatabaseConnection>,data: web
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }   
 }

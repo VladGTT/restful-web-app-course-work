@@ -36,6 +36,7 @@ pub async fn get_teacher_students(req: HttpRequest,pool: web::Data<DatabaseConne
     let result = subjects_attendies::Entity::find()
         .select_only()
         .columns([
+            users::Column::Email,
             users::Column::Firstname,
             users::Column::Secondname,
             users::Column::Lastname
@@ -59,6 +60,9 @@ pub async fn get_teacher_students(req: HttpRequest,pool: web::Data<DatabaseConne
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }

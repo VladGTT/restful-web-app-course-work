@@ -39,28 +39,14 @@ pub async fn get_admin_subjects(pool: web::Data<DatabaseConnection>)-> impl Resp
             ]
         )
         .column_as(
-            Expr::cust_with_values(
-                "CONCAT_WS(' ',?,?,?)",
-                [
-                    format!(
-                        "{}.{}",
-                        users::Column::Firstname.as_column_ref().0.to_string(),
-                        users::Column::Firstname.as_column_ref().1.to_string(),
-                    ),
-                    format!(
-                        "{}.{}",
-                        users::Column::Secondname.as_column_ref().0.to_string(),
-                        users::Column::Secondname.as_column_ref().1.to_string(),
-                    ),
-                    format!(
-                        "{}.{}",
-                        users::Column::Lastname.as_column_ref().0.to_string(),
-                        users::Column::Lastname.as_column_ref().1.to_string(),
-                    )
-                ]
-            ),
+            users::Column::Email,
             "teacher"
         )
+        .columns([
+            users::Column::Firstname,
+            users::Column::Secondname,
+            users::Column::Lastname,
+        ])       
         .column(teachers::Column::Occupation)
         .join(JoinType::InnerJoin,teachers::Relation::Subjects.def().rev())
         .join(JoinType::InnerJoin, users::Relation::Teachers.def().rev())
@@ -74,7 +60,10 @@ pub async fn get_admin_subjects(pool: web::Data<DatabaseConnection>)-> impl Resp
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }
 
@@ -99,7 +88,10 @@ pub async fn post_admin_subjects(pool: web::Data<DatabaseConnection>,data: web::
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 }
@@ -131,7 +123,10 @@ pub async fn put_admin_subjects(pool: web::Data<DatabaseConnection>,data: web::J
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 
@@ -155,6 +150,9 @@ pub async fn delete_admin_subjects(pool: web::Data<DatabaseConnection>,data: web
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }   
 }

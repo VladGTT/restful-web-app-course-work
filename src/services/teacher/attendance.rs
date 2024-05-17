@@ -87,7 +87,10 @@ pub async fn get_teacher_attendance(req: HttpRequest,pool: web::Data<DatabaseCon
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 
 }
@@ -128,7 +131,10 @@ pub async fn post_teacher_attendance(req: HttpRequest,pool: web::Data<DatabaseCo
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        _ => HttpResponse::InternalServerError().finish()
+        _ => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
      
 }
@@ -161,7 +167,10 @@ pub async fn put_teacher_attendance(req: HttpRequest,pool: web::Data<DatabaseCon
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        _ => HttpResponse::InternalServerError().finish()
+        _ => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     } 
      
 }
@@ -192,7 +201,10 @@ pub async fn delete_teacher_attendance(req: HttpRequest,pool: web::Data<Database
             _ = transaction.commit().await;
             HttpResponse::Ok().finish()        
         }
-        _ => HttpResponse::InternalServerError().finish()
+        _ => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().finish()
+        }
     }
 
 

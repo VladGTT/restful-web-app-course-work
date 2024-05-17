@@ -51,6 +51,9 @@ pub async fn get_teacher_meetings(req: HttpRequest,pool: web::Data<DatabaseConne
             _ = transaction.commit().await;
             HttpResponse::Ok().json(data)        
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => {
+            _ = transaction.rollback().await;
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }
