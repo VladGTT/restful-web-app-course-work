@@ -61,11 +61,13 @@ pub async fn get_teacher_attendance(req: HttpRequest,pool: web::Data<DatabaseCon
         .select_only()
         .columns(
             [
+                users::Column::Email,
                 users::Column::Firstname,
                 users::Column::Secondname,
                 users::Column::Lastname
             ]
         )
+        .column(meetings::Column::Id)
         .column(meetings::Column::Name)
         .column(attended_meetings::Column::Percentage)
         .join(JoinType::RightJoin,attended_meetings::Relation::Meetings.def())

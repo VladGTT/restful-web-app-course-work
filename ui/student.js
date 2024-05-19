@@ -1,6 +1,4 @@
-const server = 'localhost:8080';
-
-
+const server = window.sessionStorage.getItem("server");
 
 async function fetch_subjects(selectedSubject) {
     var headers = {
@@ -128,6 +126,10 @@ async function fetch_marks(selectedSubject) {
 
 document.addEventListener('DOMContentLoaded',async function () {
     // Your JavaScript code here
+    if (window.sessionStorage.getItem("role") != 2){
+        window.location.href = "login.html";
+    }
+
 
     var selectedSubject = {
         "id": {},

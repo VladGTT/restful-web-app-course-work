@@ -1,8 +1,9 @@
 
 use std::{env, time::Duration};
 use sea_orm::{DatabaseConnection,ConnectOptions,Database};
-use actix_web::{web,App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use actix_cors::Cors;
+use actix_files;
 use crate::services::{
     auth as Auth,
     student::{
@@ -85,12 +86,11 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
         .app_data(actix_web::web::Data::new(pool.clone()))
-        .wrap(Logger::new(pool.clone()))
         .wrap(cors)
-        .service(Auth::login)        
+        .wrap(Logger::new(pool.clone()))
         .service(
             web::scope("/api")
-            
+            .service(Auth::login)        
             .service(
                 web::scope("/teacher")
                 .wrap(auth::Authentication::new(TEACHER_ROLE_ID))
@@ -163,6 +163,7 @@ async fn main() -> std::io::Result<()> {
                 .service(put_admin_profile)
             )
         )
+        .service(actix_files::Files::new("/", "./ui").index_file("login.html"))
     })
     .bind("127.0.0.1:8080")?
     .run()

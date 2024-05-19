@@ -1,1019 +1,1388 @@
-const server = 'localhost:8080';
+const server = window.sessionStorage.getItem("server");
 
 
+class SubjectsView {
+    constructor(onChangeDataEventHandler) {
+        var subjectsList = document.getElementById("subjectsListId");
 
+        this.callback = onChangeDataEventHandler;
 
-async function fetch_subjects(selectedSubject,tablesData) {
-    var headers = {
-        // 'Content-Type': 'application/json',
-        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
-    };
+        this.selectedSubject = {}
 
-    var options = {
-        method: 'GET',
-        headers: headers,
-    };
+        this.onSelectSubjectButtonClickedEventHandler = this.#onSelectSubjectButtonClickedEventHandler.bind(this)
+        subjectsList.addEventListener("click", this.onSelectSubjectButtonClickedEventHandler)
 
-    try {
-        const response = await fetch(`http://${server}/api/teacher/subjects`, options);
-        const data = await response.json();
-
-        tablesData.subjects = data;
-        //fetching data to dropdown
-        const subjectsList = document.getElementById("subjectsListId");
+        this.fetchData();
+    }
+    async fetchData() {
+        let data = await this.callback();
 
         let newItemHTML = '';
+
         data.forEach(element => {
-            newItemHTML += `<li class="dropdown-item d-flex align-items-center gap-2 py-2" value="${element['id']}">${element['name']}</li>`
+            newItemHTML += `<li value="${element["id"]}" class="dropdown-item d-flex align-items-center gap-2 py-2">${element["name"]}</li>`
         });
 
-        let tempContainer = document.createElement('div');
+        let tempContainer = document.createElement('ul');
 
         tempContainer.innerHTML = newItemHTML;
+
+        var subjectsList = document.getElementById("subjectsListId");
 
         subjectsList.replaceChildren(...tempContainer.childNodes);
 
+        this.selectedSubject = {
+            id: subjectsList.children[0].value,
+            name: subjectsList.children[0].textContent
+        }
+        document.getElementById("subjectsSelectButton").textContent = this.selectedSubject.name;
 
-        //set default selection
-
-        selectedSubject['id'] = subjectsList.childNodes[0].value;
-        selectedSubject['name'] = subjectsList.childNodes[0].textContent;
-        
-        var button = document.getElementById("subjectsSelectButton");
-
-        button.childNodes[0].remove();
-
-        button.value = selectedSubject["id"];
-        button.textContent = selectedSubject["name"];
-
-
-    } catch (error) {
-        console.log(error);
     }
+    #onSelectSubjectButtonClickedEventHandler(event) {
+        this.selectedSubject = {
+            id: event.target.value,
+            name: event.target.textContent
+        }
+
+        document.getElementById("subjectsSelectButton").textContent = this.selectedSubject.name;
+
+    }
+
 }
+class StudentsView {
 
-async function fetch_students(selectedSubject,tablesData) {
-    var headers = {
-        // 'Content-Type': 'application/json',
-        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
-    };
+    constructor(onChangeDataEventHandler) {
+        this.selectedRow = null;
 
-    var options = {
-        method: 'GET',
-        headers: headers,
-    };
+        this.onTableClickEventHandler = this.#onTableClickEventHandler.bind(this);
 
-    try {
-        const response = await fetch(`http://${server}/api/teacher/students?subject_id=${selectedSubject["id"]}`, options);
-        const data = await response.json();
-        tablesData.students = data;
-        
+        this.callback = onChangeDataEventHandler;
+        let newItemHTML =
+            `<table class="table table-striped table-sm">
+            <thead>
+              <tr>
+                <th scope="col">Пошта</th>
+                <th scope="col">Прізвище</th>
+                <th scope="col">Ім'я</th>
+                <th scope="col">По-батькові</th>
+                <th scope="col">Група</th>
+              </tr>
+            </thead>
+            <tbody id="table" class="table-group-divider text-break">
+            
+           </tbody>
+          </table>`;
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("tableContainer").replaceChildren(...tempContainer.childNodes);
+        document.getElementById("tableButtonsId").classList.add("visually-hidden")
 
-        let studentsTable = document.getElementById("studentsTable");
+        document.getElementById("table").addEventListener("click", this.onTableClickEventHandler)
 
+        this.fetchData()
+    }
+
+    async fetchData() {
+        let table = document.getElementById("table");
+
+        let data = await this.callback();
         //fetching data to dropdown
 
         let newItemHTML = '';
+
         data.forEach(element => {
-            newItemHTML += `<tr><td>${element["lastname"]}</td><td>${element["secondname"]}</td><td>${element["firstname"]}</td><td>${element["group"]}</td></tr>`
+            newItemHTML +=
+                `<tr>
+            <td>${element['email']}</td>
+            <td>${element['lastname']}</td>
+            <td>${element['secondname']}</td>
+            <td>${element['firstname']}</td>
+            <td>${element['group']}</td>
+        </tr>`
         });
 
         let tempContainer = document.createElement('tbody');
 
         tempContainer.innerHTML = newItemHTML;
 
-        studentsTable.replaceChildren(...tempContainer.childNodes);
+        table.replaceChildren(...tempContainer.childNodes);
 
-    } catch (error) {
-        console.log(error);
+    }
+    #onTableClickEventHandler(event) {
+        let classAttribute = 'table-warning';
+        if (this.selectedRow) {
+            this.selectedRow.classList.remove(classAttribute);
+        }
+
+        this.selectedRow = event.target.closest("tr");
+
+        this.selectedRow.classList.add(classAttribute);
     }
 }
 
-async function fetch_meetings(selectedSubject,tablesData) {
-    var headers = {
-        // 'Content-Type': 'application/json',
-        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
-    };
+class MeetingsView {
 
-    var options = {
-        method: 'GET',
-        headers: headers,
-    };
+    constructor(onChangeDataEventHandler) {
+        this.selectedRow = null;
 
-    try {
-        const response = await fetch(`http://${server}/api/teacher/meetings?subject_id=${selectedSubject["id"]}`, options);
-        const data = await response.json();
-        
-        tablesData.meetings = data;
-        
-        let meetingsTable = document.getElementById("meetingsTable");
+        this.onTableClickEventHandler = this.#onTableClickEventHandler.bind(this);
 
+        this.callback = onChangeDataEventHandler;
+        let newItemHTML =
+            `<table class="table table-striped table-sm">
+            <thead>
+              <tr>
+                <th scope="col">Зібрання #</th>
+                <th scope="col">Назва</th>
+                <th scope="col">Час</th>
+              </tr>
+            </thead>
+            <tbody id="table" class="table-group-divider text-break">
+             
+           </tbody>
+          </table>`;
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("tableContainer").replaceChildren(...tempContainer.childNodes);
+        document.getElementById("tableButtonsId").classList.add("visually-hidden")
+
+        document.getElementById("table").addEventListener("click", this.onTableClickEventHandler)
+
+        this.fetchData()
+    }
+
+    async fetchData() {
+        let table = document.getElementById("table");
+
+        let data = await this.callback();
         //fetching data to dropdown
 
         let newItemHTML = '';
+
         data.forEach(element => {
-            newItemHTML += `<tr><td>${element["id"]}</td><td>${element["name"]}</td><td>${element["time"]}</td></tr>`
+            newItemHTML +=
+                `<tr>
+                <td>${element['id']}</td>
+                <td>${element['name']}</td>
+                <td>${element['time']}</td>
+            </tr>`
         });
 
         let tempContainer = document.createElement('tbody');
 
         tempContainer.innerHTML = newItemHTML;
 
-        meetingsTable.replaceChildren(...tempContainer.childNodes);
+        table.replaceChildren(...tempContainer.childNodes);
 
-    } catch (error) {
-        console.log(error);
+    }
+    #onTableClickEventHandler(event) {
+        let classAttribute = 'table-warning';
+        if (this.selectedRow) {
+            this.selectedRow.classList.remove(classAttribute);
+        }
+
+        this.selectedRow = event.target.closest("tr");
+
+        this.selectedRow.classList.add(classAttribute);
     }
 }
-async function fetch_tasks(selectedSubject,tablesData) {
+
+class TasksView {
+
+    constructor(onChangeDataEventHandler) {
+        this.selectedRow = null;
+
+        this.onEditIconClickEventHandler = this.#onEditIconClickEventHandler.bind(this);
+        this.onTableClickEventHandler = this.#onTableClickEventHandler.bind(this);
+        this.onSubmitEditionEventHandler = this.#onSubmitEditionEventHandler.bind(this);
+        this.onSubmitDeletionEventHandler = this.#onSubmitDeletionEventHandler.bind(this);
+        this.onSubmitCreationEventHandler = this.#onSubmitCreationEventHandler.bind(this);
+        this.onDeleteIconClickEventHandler = this.#onDeleteIconClickEventHandler.bind(this);
+        this.onCreateIconClickEventHandler = this.#onCreateIconClickEventHandler.bind(this);
+
+
+        this.callback = onChangeDataEventHandler;
+
+        let newItemHTML = `
+        <table class="table table-striped table-sm">
+          <thead>
+            <tr>
+                <th scope="col">Завдання #</th>
+                <th scope="col">Назва</th>
+                <th scope="col">Опис</th>
+                <th scope="col">Термін</th>
+                <th scope="col">Макс бал</th>
+            </tr>
+          </thead>
+          <tbody id="table" class="table-group-divider text-break">
+         </tbody>
+        </table>
+  
+  
+      <div class="modal fade" id="deleteModalId" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h1 class="modal-title fs-5" id="editModalLabel">Видалити запис</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="deleteFormId">
+  
+          </form>
+        </div>
+      </div>
+    </div>
+  
+      <div class="modal fade" id="editModalId" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="editModalLabel">Редагувати запис</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="editFormId">
+            
+          </form>
+        </div>
+      </div>
+    </div>
+  
+    <div class="modal fade" id="createModalId" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="createModalLabel">Створити запис</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="createFormId">
+  
+          </form>
+        </div>
+      </div>
+    </div>
+      `;
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("tableContainer").replaceChildren(...tempContainer.childNodes);
+
+        document.getElementById("tableButtonsId").classList.remove("visually-hidden")
+
+
+        let editModal = document.getElementById("editModalId");
+        editModal.addEventListener("show.bs.modal", this.onEditIconClickEventHandler);
+
+        let deleteModal = document.getElementById("deleteModalId");
+        deleteModal.addEventListener("show.bs.modal", this.onDeleteIconClickEventHandler);
+
+        let createModal = document.getElementById("createModalId");
+        createModal.addEventListener("show.bs.modal", this.onCreateIconClickEventHandler);
+
+        let table = document.getElementById("table");
+        table.addEventListener("click", this.onTableClickEventHandler);
+
+        let editForm = document.getElementById("editFormId");
+        editForm.addEventListener("submit", this.onSubmitEditionEventHandler);
+
+        let deleteForm = document.getElementById("deleteFormId");
+        deleteForm.addEventListener("submit", this.onSubmitDeletionEventHandler);
+
+        let createForm = document.getElementById("createFormId");
+        createForm.addEventListener("submit", this.onSubmitCreationEventHandler);
+
+        this.fetchData();
+    }
+
+    async fetchData() {
+        let data = await this.callback();
+        //fetching data to dropdown
+
+        let newItemHTML = '';
+
+        data.tasks.forEach(element => {
+            newItemHTML +=
+                `<tr>
+            <td>${element["id"]}</td>
+            <td>${element["name"]}</td>
+            <td>${element["description"]}</td>
+            <td>${element["due_to"]}</td>
+            <td>${element["max_point"]}</td>
+        </tr>`;
+        });
+        this.selectedSubject = data.selectedSubject;
+
+        let tempContainer = document.createElement('tbody');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("table").replaceChildren(...tempContainer.childNodes);
+    }
+    #onTableClickEventHandler(event) {
+        let classAttribute = 'table-warning';
+        if (this.selectedRow) {
+            this.selectedRow.classList.remove(classAttribute);
+        }
+
+        this.selectedRow = event.target.closest("tr");
+
+        this.selectedRow.classList.add(classAttribute);
+    }
+
+    #onCreateIconClickEventHandler() {
+        let newItemHTML =
+            `<div class="modal-body p-5 pt-0">
+              <div class="mb-3">
+                  <label for="exampleFormControlInput1" class="form-label">Назва</label>
+                  <input type="text" class="form-control" id="exampleFormControlInput1">
+              </div>
+              <div class="mb-3">
+                  <label for="exampleFormControlTextarea4" class="form-label">Опис</label>
+                  <textarea class="form-control" id="exampleFormControlTextarea4" rows="3"></textarea>
+              </div>
+              <div class="mb-3">
+                  <label for="exampleFormControlInput2" class="form-label">Термін</label>
+                  <input type="text" class="form-control" id="exampleFormControlInput2">
+              </div>
+              <div class="mb-3">
+                  <label for="exampleFormControlInput5" class="form-label">Макс Балл</label>
+                  <input type="text" class="form-control" id="exampleFormControlInput5">
+              </div>
+              <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit" data-bs-dismiss="modal">Створити</button>
+      </div>`;
+
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("createFormId").replaceChildren(...tempContainer.childNodes);
+    }
+
+    #onEditIconClickEventHandler() {
+        let newItemHTML
+        if (!this.selectedRow) {
+            newItemHTML =
+                `<div class="modal-body p-4 text-center">
+          <p class="mb-0">Потрібно виділити дані</p>
+          </div>
+          <div class="modal-footer flex-nowrap p-0">
+          <button type="button" class="bg-warning btn btn-lg fs-6 text-decoration-none col-6 py-3 m-0 rounded-0 border-end" data-bs-dismiss="modal"><strong>Yes</strong></button>
+          </div>`;
+        } else {
+            var cells = this.selectedRow.querySelectorAll("td");
+
+            newItemHTML =
+                `<div class="modal-body p-5 pt-0">
+            <div class="mb-3">
+              <label for="exampleFormControlInput6" class="form-label">Id</label>
+              <input type="text" class="form-control" id="exampleFormControlInput6" disabled value="${cells[0].textContent}">
+            </div>  
+
+            <div class="mb-3">
+                <label for="exampleFormControlInput1" class="form-label">Назва</label>
+                <input type="text" class="form-control" id="exampleFormControlInput1" value="${cells[1].textContent}">
+            </div>
+            <div class="mb-3">
+                <label for="exampleFormControlTextarea4" class="form-label">Опис</label>
+                <textarea class="form-control" id="exampleFormControlTextarea4" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="exampleFormControlInput2" class="form-label">Термін</label>
+                <input type="text" class="form-control" id="exampleFormControlInput2" value="${cells[3].textContent}">
+            </div>
+            <div class="mb-3">
+                <label for="exampleFormControlInput5" class="form-label">Макс Балл</label>
+                <input type="text" class="form-control" id="exampleFormControlInput5" value="${cells[4].textContent}">
+            </div>
+            <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit" data-bs-dismiss="modal">Створити</button>
+          </div>`;
+        }
+
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("editFormId").replaceChildren(...tempContainer.childNodes);
+    }
+
+    #onDeleteIconClickEventHandler() {
+        let form = document.getElementById("deleteFormId");
+        let newItemHTML
+        if (!this.selectedRow) {
+            newItemHTML =
+                `<div class="modal-content rounded-3 shadow">
+        <div class="modal-body p-4 text-center">
+        <p class="mb-0">Потрібно виділити дані</p>
+        </div>
+        <div class="modal-footer flex-nowrap p-0">
+        <button type="button" class="bg-warning btn btn-lg fs-6 text-decoration-none col-6 py-3 m-0 rounded-0 border-end" data-bs-dismiss="modal"><strong>Yes</strong></button>
+        </div></div>`;
+        } else {
+            newItemHTML =
+                `<div class="modal-content rounded-3 shadow">
+         <div class="modal-body p-4 text-center">
+           <h5 class="mb-0">Видалити запис?</h5>
+           <p class="mb-0">Ви не зможете відмінити цю дію</p>
+         </div>
+         <div class="modal-footer flex-nowrap p-0">
+           <button type="submit" id="confirmDeleteButton" class="bg-danger btn btn-lg fs-6 text-decoration-none col-6 py-3 m-0 rounded-0 border-end" data-bs-dismiss="modal"><strong>Yes</strong></button>
+           <button type="button" class="btn btn-lg fs-6 text-decoration-none col-6 py-3 m-0 rounded-0" data-bs-dismiss="modal">No</button>
+         </div>
+       </div>`;
+        }
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        form.replaceChildren(...tempContainer.childNodes);
+    }
+
+    async #onSubmitCreationEventHandler(event) {
+        event.preventDefault();
+        var createForm = document.getElementById("createFormId");
+
+        var data = {
+            "name": createForm[1].value,
+            "description": createForm[2].value,
+            "subject_id": parseInt(this.selectedSubject.id),
+            "due_to": createForm[3].value,
+            "max_point": parseFloat(createForm[4].value),
+        }
+
+        var headers = {
+            'Content-Type': 'application/json',
+            'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+        };
+
+        var options = {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data)
+        };
+
+        const response = await fetch(`http://${server}/api/teacher/tasks`, options);
+        if (!response.ok) {
+            alert(`Error occured`)
+        }
+        this.fetchData();
+    }
+
+    async #onSubmitEditionEventHandler(event) {
+        event.preventDefault();
+        var editForm = document.getElementById("editFormId");
+
+        var data = {
+            "id": parseInt(editForm[0].value),
+            "name": editForm[1].value,
+            "description": editForm[2].value,
+            "subject_id": parseInt(this.selectedSubject.id),
+            "due_to": editForm[3].value,
+            "max_point": parseFloat(editForm[4].value),
+        }
+
+        var headers = {
+            'Content-Type': 'application/json',
+            'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+        };
+
+        var options = {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(data)
+        };
+
+        const response = await fetch(`http://${server}/api/teacher/tasks`, options);
+        if (!response.ok) {
+            alert(`Error occured`)
+        }
+        this.fetchData();
+    }
+
+    async #onSubmitDeletionEventHandler(event) {
+        event.preventDefault();
+
+        var cells = this.selectedRow.querySelectorAll("td");
+
+        var headers = {
+            'Content-Type': 'application/json',
+            'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+        };
+
+        var options = {
+            method: 'DELETE',
+            headers: headers,
+            body: JSON.stringify({ "id": parseInt(cells[0].textContent) })
+        };
+
+        const response = await fetch(`http://${server}/api/teacher/tasks`, options);
+        if (!response.ok) {
+            alert(`Error occured`)
+        }
+        this.fetchData();
+    }
+}
+
+class AttendanceView {
+
+    constructor(onChangeDataEventHandler) {
+        this.selectedRow = null;
+
+        this.onEditIconClickEventHandler = this.#onEditIconClickEventHandler.bind(this);
+        this.onTableClickEventHandler = this.#onTableClickEventHandler.bind(this);
+        this.onSubmitEditionEventHandler = this.#onSubmitEditionEventHandler.bind(this);
+        this.onSubmitDeletionEventHandler = this.#onSubmitDeletionEventHandler.bind(this);
+        this.onSubmitCreationEventHandler = this.#onSubmitCreationEventHandler.bind(this);
+        this.onDeleteIconClickEventHandler = this.#onDeleteIconClickEventHandler.bind(this);
+        this.onCreateIconClickEventHandler = this.#onCreateIconClickEventHandler.bind(this);
+
+
+        this.callback = onChangeDataEventHandler;
+
+        let newItemHTML = `
+        <table class="table table-striped table-sm">
+          <thead>
+            <tr>
+                <th scope="col">ПІБ Студента</th>
+                <th scope="col">Зайняття</th>
+                <th scope="col">Відсоток відвідування</th>
+                        
+            </tr>
+          </thead>
+          <tbody id="table" class="table-group-divider text-break">
+         </tbody>
+        </table>
+  
+  
+      <div class="modal fade" id="deleteModalId" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h1 class="modal-title fs-5" id="editModalLabel">Видалити запис</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="deleteFormId">
+  
+          </form>
+        </div>
+      </div>
+    </div>
+  
+      <div class="modal fade" id="editModalId" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="editModalLabel">Редагувати запис</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="editFormId">
+            
+          </form>
+        </div>
+      </div>
+    </div>
+  
+    <div class="modal fade" id="createModalId" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="createModalLabel">Створити запис</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="createFormId">
+  
+          </form>
+        </div>
+      </div>
+    </div>
+      `;
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("tableContainer").replaceChildren(...tempContainer.childNodes);
+
+        document.getElementById("tableButtonsId").classList.remove("visually-hidden")
+
+
+        let editModal = document.getElementById("editModalId");
+        editModal.addEventListener("show.bs.modal", this.onEditIconClickEventHandler);
+
+        let deleteModal = document.getElementById("deleteModalId");
+        deleteModal.addEventListener("show.bs.modal", this.onDeleteIconClickEventHandler);
+
+        let createModal = document.getElementById("createModalId");
+        createModal.addEventListener("show.bs.modal", this.onCreateIconClickEventHandler);
+
+        let table = document.getElementById("table");
+        table.addEventListener("click", this.onTableClickEventHandler);
+
+        let editForm = document.getElementById("editFormId");
+        editForm.addEventListener("submit", this.onSubmitEditionEventHandler);
+
+        let deleteForm = document.getElementById("deleteFormId");
+        deleteForm.addEventListener("submit", this.onSubmitDeletionEventHandler);
+
+        let createForm = document.getElementById("createFormId");
+        createForm.addEventListener("submit", this.onSubmitCreationEventHandler);
+
+        this.fetchData();
+    }
+
+    async fetchData() {
+        let data = await this.callback();
+        //fetching data to dropdown
+
+        let newItemHTML = '';
+
+        data.attendance.forEach(element => {
+            newItemHTML += 
+            `<tr>
+                <td hidden>${element["email"]}</td>
+                <td>${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</td>
+                <td hidden>${element["id"]}</td>
+                <td>${element["name"]}</td>
+                <td>${element["percentage"]}</td>
+            </tr>`;
+        });
+        this.selectedSubject = data.selectedSubject;
+        this.students = data.students;
+        this.meetings = data.meetings;
+
+        let tempContainer = document.createElement('tbody');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("table").replaceChildren(...tempContainer.childNodes);
+    }
+    #onTableClickEventHandler(event) {
+        let classAttribute = 'table-warning';
+        if (this.selectedRow) {
+            this.selectedRow.classList.remove(classAttribute);
+        }
+
+        this.selectedRow = event.target.closest("tr");
+
+        this.selectedRow.classList.add(classAttribute);
+    }
+
+    #onCreateIconClickEventHandler() {
+        let attendies=''
+        this.students.forEach(element=>{
+          attendies += `<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</option>`;
+        });
+        
+        let meetings=''
+        this.meetings.forEach(element=>{
+          meetings += `<option value="${element["id"]}">${element["name"]}</option>`;
+        });
+        
+        let newItemHTML = 
+        `<div class="modal-body p-5 pt-0">
+                <div class="mb-3">
+                    <label for="exampleFormControlInput3" class="form-label">Студент</label>
+                    <select class="form-select" aria-label="Default select example" id="exampleFormControlInput3">
+                    ${attendies}
+                    </select>
+                </div>
+                <div class="mb-3">
+                  <label for="exampleFormControlInput4" class="form-label">Зайняття</label>
+                  <select class="form-select" aria-label="Default select example" id="exampleFormControlInput4">
+                    ${meetings}
+                  </select>
+                </div>
+                <div class="mb-3">
+                    <label for="exampleFormControlInput5" class="form-label">Присутність</label>
+                    <input type="text" class="form-control" id="exampleFormControlInput5">
+                </div>
+                <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit" data-bs-dismiss="modal">Створити</button>
+        </div>`;
+
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("createFormId").replaceChildren(...tempContainer.childNodes);
+    }
+
+    #onEditIconClickEventHandler() {
+        let newItemHTML
+        if (!this.selectedRow) {
+            newItemHTML =
+                `<div class="modal-body p-4 text-center">
+          <p class="mb-0">Потрібно виділити дані</p>
+          </div>
+          <div class="modal-footer flex-nowrap p-0">
+          <button type="button" class="bg-warning btn btn-lg fs-6 text-decoration-none col-6 py-3 m-0 rounded-0 border-end" data-bs-dismiss="modal"><strong>Yes</strong></button>
+          </div>`;
+        } else {
+            var cells = this.selectedRow.querySelectorAll("td");
+
+            let attendies=''
+            this.students.forEach(element=>{
+              attendies += `<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]})</option>`;
+            });
+            
+            let meetings=''
+            this.meetings.forEach(element=>{
+              meetings += `<option value="${element["id"]}">${element["name"]}</option>`;
+            });
+            
+            newItemHTML = 
+            `<div class="modal-body p-5 pt-0">
+                    <div class="mb-3">
+                        <label for="exampleFormControlInput3" class="form-label">Студент</label>
+                        <select class="form-select" aria-label="Default select example" id="exampleFormControlInput3">
+                        ${attendies}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                      <label for="exampleFormControlInput4" class="form-label">Зайняття</label>
+                      <select class="form-select" aria-label="Default select example" id="exampleFormControlInput4">
+                        ${meetings}
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleFormControlInput5" class="form-label">Присутність</label>
+                        <input type="text" class="form-control" id="exampleFormControlInput5" value="${cells[4].textContent}">
+                    </div>
+                    <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit" data-bs-dismiss="modal">Редагувати</button>
+            </div>`;
+      
+        }
+
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("editFormId").replaceChildren(...tempContainer.childNodes);
+    }
+
+    #onDeleteIconClickEventHandler() {
+        let form = document.getElementById("deleteFormId");
+        let newItemHTML
+        if (!this.selectedRow) {
+            newItemHTML =
+                `<div class="modal-content rounded-3 shadow">
+        <div class="modal-body p-4 text-center">
+        <p class="mb-0">Потрібно виділити дані</p>
+        </div>
+        <div class="modal-footer flex-nowrap p-0">
+        <button type="button" class="bg-warning btn btn-lg fs-6 text-decoration-none col-6 py-3 m-0 rounded-0 border-end" data-bs-dismiss="modal"><strong>Yes</strong></button>
+        </div></div>`;
+        } else {
+            newItemHTML =
+                `<div class="modal-content rounded-3 shadow">
+         <div class="modal-body p-4 text-center">
+           <h5 class="mb-0">Видалити запис?</h5>
+           <p class="mb-0">Ви не зможете відмінити цю дію</p>
+         </div>
+         <div class="modal-footer flex-nowrap p-0">
+           <button type="submit" id="confirmDeleteButton" class="bg-danger btn btn-lg fs-6 text-decoration-none col-6 py-3 m-0 rounded-0 border-end" data-bs-dismiss="modal"><strong>Yes</strong></button>
+           <button type="button" class="btn btn-lg fs-6 text-decoration-none col-6 py-3 m-0 rounded-0" data-bs-dismiss="modal">No</button>
+         </div>
+       </div>`;
+        }
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        form.replaceChildren(...tempContainer.childNodes);
+    }
+
+    async #onSubmitCreationEventHandler(event) {
+        event.preventDefault();
+        var createForm = document.getElementById("createFormId");
+
+        var data = {
+            "meeting_id": parseInt(createForm[1].value),
+            "student_id": createForm[0].value,
+            "subject_id": parseInt(this.selectedSubject.id),
+            "percentage": parseFloat(createForm[2].value),
+        }
+
+        var headers = {
+            'Content-Type': 'application/json',
+            'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+        };
+
+        var options = {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data)
+        };
+
+        const response = await fetch(`http://${server}/api/teacher/attendance`, options);
+        if (!response.ok) {
+            alert(`Error occured`)
+        }
+        this.fetchData();
+    }
+
+    async #onSubmitEditionEventHandler(event) {
+        event.preventDefault();
+        var editForm = document.getElementById("editFormId");
+
+        var data = {
+            "meeting_id": parseInt(editForm[1].value),
+            "student_id": editForm[0].value,
+            "subject_id": parseInt(this.selectedSubject.id),
+            "percentage": parseFloat(editForm[2].value),
+        }
+
+        var headers = {
+            'Content-Type': 'application/json',
+            'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+        };
+
+        var options = {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(data)
+        };
+
+        const response = await fetch(`http://${server}/api/teacher/attendance`, options);
+        if (!response.ok) {
+            alert(`Error occured`)
+        }
+        this.fetchData();
+    }
+
+    async #onSubmitDeletionEventHandler(event) {
+        event.preventDefault();
+
+        var cells = this.selectedRow.querySelectorAll("td");
+
+        var headers = {
+            'Content-Type': 'application/json',
+            'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+        };
+        var data = {
+            "meeting_id": parseInt(cells[2].textContent),
+            "student_id": cells[0].textContent,
+            "subject_id": parseInt(this.selectedSubject.id),
+        }
+        var options = {
+            method: 'DELETE',
+            headers: headers,
+            body: JSON.stringify(data)
+        };
+
+        const response = await fetch(`http://${server}/api/teacher/attendance`, options);
+        if (!response.ok) {
+            alert(`Error occured`)
+        }
+        this.fetchData();
+    }
+}
+
+class MarksView {
+
+    constructor(onChangeDataEventHandler) {
+        this.selectedRow = null;
+
+        this.onEditIconClickEventHandler = this.#onEditIconClickEventHandler.bind(this);
+        this.onTableClickEventHandler = this.#onTableClickEventHandler.bind(this);
+        this.onSubmitEditionEventHandler = this.#onSubmitEditionEventHandler.bind(this);
+        this.onSubmitDeletionEventHandler = this.#onSubmitDeletionEventHandler.bind(this);
+        this.onSubmitCreationEventHandler = this.#onSubmitCreationEventHandler.bind(this);
+        this.onDeleteIconClickEventHandler = this.#onDeleteIconClickEventHandler.bind(this);
+        this.onCreateIconClickEventHandler = this.#onCreateIconClickEventHandler.bind(this);
+
+
+        this.callback = onChangeDataEventHandler;
+
+        let newItemHTML = `
+        <table class="table table-striped table-sm">
+          <thead>
+            <tr>
+                <th scope="col">ПІБ Студента</th>
+                <th scope="col">Зайняття</th>
+                <th scope="col">Оцінка %</th>                  
+            </tr>
+          </thead>
+          <tbody id="table" class="table-group-divider text-break">
+         </tbody>
+        </table>
+  
+  
+      <div class="modal fade" id="deleteModalId" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h1 class="modal-title fs-5" id="editModalLabel">Видалити запис</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="deleteFormId">
+  
+          </form>
+        </div>
+      </div>
+    </div>
+  
+      <div class="modal fade" id="editModalId" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="editModalLabel">Редагувати запис</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="editFormId">
+            
+          </form>
+        </div>
+      </div>
+    </div>
+  
+    <div class="modal fade" id="createModalId" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="createModalLabel">Створити запис</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="createFormId">
+  
+          </form>
+        </div>
+      </div>
+    </div>
+      `;
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("tableContainer").replaceChildren(...tempContainer.childNodes);
+
+        document.getElementById("tableButtonsId").classList.remove("visually-hidden")
+
+
+        let editModal = document.getElementById("editModalId");
+        editModal.addEventListener("show.bs.modal", this.onEditIconClickEventHandler);
+
+        let deleteModal = document.getElementById("deleteModalId");
+        deleteModal.addEventListener("show.bs.modal", this.onDeleteIconClickEventHandler);
+
+        let createModal = document.getElementById("createModalId");
+        createModal.addEventListener("show.bs.modal", this.onCreateIconClickEventHandler);
+
+        let table = document.getElementById("table");
+        table.addEventListener("click", this.onTableClickEventHandler);
+
+        let editForm = document.getElementById("editFormId");
+        editForm.addEventListener("submit", this.onSubmitEditionEventHandler);
+
+        let deleteForm = document.getElementById("deleteFormId");
+        deleteForm.addEventListener("submit", this.onSubmitDeletionEventHandler);
+
+        let createForm = document.getElementById("createFormId");
+        createForm.addEventListener("submit", this.onSubmitCreationEventHandler);
+
+        this.fetchData();
+    }
+
+    async fetchData() {
+        let data = await this.callback();
+        //fetching data to dropdown
+
+        let newItemHTML = '';
+
+        data.marks.forEach(element => {
+            newItemHTML += 
+            `<tr>
+                <td hidden>${element["email"]}</td>
+                <td>${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</td>
+                <td hidden>${element["id"]}</td>
+                <td>${element["name"]}</td>
+                <td>${element["mark"]}</td>
+            </tr>`;
+        });
+        this.selectedSubject = data.selectedSubject;
+        this.students = data.students;
+        this.tasks = data.tasks;
+
+        let tempContainer = document.createElement('tbody');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("table").replaceChildren(...tempContainer.childNodes);
+    }
+    #onTableClickEventHandler(event) {
+        let classAttribute = 'table-warning';
+        if (this.selectedRow) {
+            this.selectedRow.classList.remove(classAttribute);
+        }
+
+        this.selectedRow = event.target.closest("tr");
+
+        this.selectedRow.classList.add(classAttribute);
+    }
+
+    #onCreateIconClickEventHandler() {
+        let attendies=''
+        this.students.forEach(element=>{
+          attendies += `<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</option>`;
+        });
+        
+        let tasks=''
+        this.tasks.forEach(element=>{
+            tasks += `<option value="${element["id"]}">${element["name"]}</option>`;
+        });
+        
+        let newItemHTML = 
+        `<div class="modal-body p-5 pt-0">
+                <div class="mb-3">
+                    <label for="exampleFormControlInput3" class="form-label">Студент</label>
+                    <select class="form-select" aria-label="Default select example" id="exampleFormControlInput3">
+                    ${attendies}
+                    </select>
+                </div>
+                <div class="mb-3">
+                  <label for="exampleFormControlInput4" class="form-label">Завдання</label>
+                  <select class="form-select" aria-label="Default select example" id="exampleFormControlInput4">
+                    ${tasks}
+                  </select>
+                </div>
+                <div class="mb-3">
+                    <label for="exampleFormControlInput5" class="form-label">Бали</label>
+                    <input type="text" class="form-control" id="exampleFormControlInput5">
+                </div>
+                <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit" data-bs-dismiss="modal">Створити</button>
+        </div>`;
+
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("createFormId").replaceChildren(...tempContainer.childNodes);
+    }
+
+    #onEditIconClickEventHandler() {
+        let newItemHTML
+        if (!this.selectedRow) {
+            newItemHTML =
+                `<div class="modal-body p-4 text-center">
+          <p class="mb-0">Потрібно виділити дані</p>
+          </div>
+          <div class="modal-footer flex-nowrap p-0">
+          <button type="button" class="bg-warning btn btn-lg fs-6 text-decoration-none col-6 py-3 m-0 rounded-0 border-end" data-bs-dismiss="modal"><strong>Yes</strong></button>
+          </div>`;
+        } else {
+            var cells = this.selectedRow.querySelectorAll("td");
+
+            let attendies=''
+            this.students.forEach(element=>{
+              attendies += `<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]})</option>`;
+            });
+            
+            let tasks=''
+            this.tasks.forEach(element=>{
+                tasks += `<option value="${element["id"]}">${element["name"]}</option>`;
+            });
+            
+            newItemHTML = 
+            `<div class="modal-body p-5 pt-0">
+                    <div class="mb-3">
+                        <label for="exampleFormControlInput3" class="form-label">Студент</label>
+                        <select class="form-select" aria-label="Default select example" id="exampleFormControlInput3">
+                        ${attendies}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                      <label for="exampleFormControlInput4" class="form-label">Завдання</label>
+                      <select class="form-select" aria-label="Default select example" id="exampleFormControlInput4">
+                        ${tasks}
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleFormControlInput5" class="form-label">Бали</label>
+                        <input type="text" class="form-control" id="exampleFormControlInput5" value="${cells[4].textContent}">
+                    </div>
+                    <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit" data-bs-dismiss="modal">Редагувати</button>
+            </div>`;
+      
+        }
+
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("editFormId").replaceChildren(...tempContainer.childNodes);
+    }
+
+    #onDeleteIconClickEventHandler() {
+        let form = document.getElementById("deleteFormId");
+        let newItemHTML
+        if (!this.selectedRow) {
+            newItemHTML =
+                `<div class="modal-content rounded-3 shadow">
+        <div class="modal-body p-4 text-center">
+        <p class="mb-0">Потрібно виділити дані</p>
+        </div>
+        <div class="modal-footer flex-nowrap p-0">
+        <button type="button" class="bg-warning btn btn-lg fs-6 text-decoration-none col-6 py-3 m-0 rounded-0 border-end" data-bs-dismiss="modal"><strong>Yes</strong></button>
+        </div></div>`;
+        } else {
+            newItemHTML =
+                `<div class="modal-content rounded-3 shadow">
+         <div class="modal-body p-4 text-center">
+           <h5 class="mb-0">Видалити запис?</h5>
+           <p class="mb-0">Ви не зможете відмінити цю дію</p>
+         </div>
+         <div class="modal-footer flex-nowrap p-0">
+           <button type="submit" id="confirmDeleteButton" class="bg-danger btn btn-lg fs-6 text-decoration-none col-6 py-3 m-0 rounded-0 border-end" data-bs-dismiss="modal"><strong>Yes</strong></button>
+           <button type="button" class="btn btn-lg fs-6 text-decoration-none col-6 py-3 m-0 rounded-0" data-bs-dismiss="modal">No</button>
+         </div>
+       </div>`;
+        }
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        form.replaceChildren(...tempContainer.childNodes);
+    }
+
+    async #onSubmitCreationEventHandler(event) {
+        event.preventDefault();
+        var createForm = document.getElementById("createFormId");
+
+        var data = {
+            "assignment_id": parseInt(createForm[1].value),
+            "student_id": createForm[0].value,
+            "subject_id": parseInt(this.selectedSubject.id),
+            "mark": parseFloat(createForm[2].value),
+        }
+
+        var headers = {
+            'Content-Type': 'application/json',
+            'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+        };
+
+        var options = {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data)
+        };
+
+        const response = await fetch(`http://${server}/api/teacher/marks`, options);
+        if (!response.ok) {
+            alert(`Error occured`)
+        }
+        this.fetchData();
+    }
+
+    async #onSubmitEditionEventHandler(event) {
+        event.preventDefault();
+        var editForm = document.getElementById("editFormId");
+
+        var data = {
+            "assignment_id": parseInt(editForm[1].value),
+            "student_id": editForm[0].value,
+            "subject_id": parseInt(this.selectedSubject.id),
+            "mark": parseFloat(editForm[2].value),
+        }
+
+        var headers = {
+            'Content-Type': 'application/json',
+            'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+        };
+
+        var options = {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(data)
+        };
+
+        const response = await fetch(`http://${server}/api/teacher/marks`, options);
+        if (!response.ok) {
+            alert(`Error occured`)
+        }
+        this.fetchData();
+    }
+
+    async #onSubmitDeletionEventHandler(event) {
+        event.preventDefault();
+
+        var cells = this.selectedRow.querySelectorAll("td");
+
+        var headers = {
+            'Content-Type': 'application/json',
+            'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+        };
+        var data = {
+            "assignment_id": parseInt(cells[2].textContent),
+            "student_id": cells[0].textContent,
+            "subject_id": parseInt(this.selectedSubject.id),
+        }
+        var options = {
+            method: 'DELETE',
+            headers: headers,
+            body: JSON.stringify(data)
+        };
+
+        const response = await fetch(`http://${server}/api/teacher/marks`, options);
+        if (!response.ok) {
+            alert(`Error occured`)
+        }
+        this.fetchData();
+    }
+}
+
+
+
+
+async function getStudentsData(subjectId) {
+
+    // Define the headers for the request
     var headers = {
-        // 'Content-Type': 'application/json',
+        'Content-Type': 'application/json',
         'AUTHORIZATION': window.sessionStorage.getItem('authorization')
     };
 
+    // Define the options for the fetch request
     var options = {
         method: 'GET',
         headers: headers,
     };
 
-    try {
-        const response = await fetch(`http://${server}/api/teacher/tasks?subject_id=${selectedSubject["id"]}`, options);
-        const data = await response.json();
-        
-        tablesData.tasks = data;
-        
-        let tasksTable = document.getElementById("tasksTable");
-
-        //fetching data to dropdown
-
-        let newItemHTML = '';
-        data.forEach(element => {
-            newItemHTML += `<tr><td>${element["id"]}</td><td>${element["name"]}</td><td>${element["description"]}</td><td>${element["due_to"]}</td><td>${element["max_point"]}</td></tr>`
-        });
-
-        let tempContainer = document.createElement('tbody');
-
-        tempContainer.innerHTML = newItemHTML;
-
-        tasksTable.replaceChildren(...tempContainer.childNodes);
-
-    } catch (error) {
-        console.log(error);
-    }
+    let responce = await fetch(`http://${server}/api/teacher/students?subject_id=${subjectId}`, options);
+    let data = await responce.json();
+    return data;
 }
-async function fetch_attendance(selectedSubject,tablesData) {
+
+async function getSubjectsData() {
+
+    // Define the headers for the request
     var headers = {
-        // 'Content-Type': 'application/json',
+        'Content-Type': 'application/json',
         'AUTHORIZATION': window.sessionStorage.getItem('authorization')
     };
 
+    // Define the options for the fetch request
     var options = {
         method: 'GET',
         headers: headers,
     };
 
-    try {
-        const response = await fetch(`http://${server}/api/teacher/attendance?subject_id=${selectedSubject["id"]}`, options);
-        const data = await response.json();
-        
-        tablesData.attendance = data;
-        
-        let attendanceTable = document.getElementById("attendanceTable");
-
-        //fetching data to dropdown
-
-        let newItemHTML = '';
-        data.forEach(element => {
-            newItemHTML += `<tr>
-                                <td>${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</td>
-                                <td>${element["name"]}</td>
-                                <td>${element["percentage"]}</td>
-                            </tr>`; 
-        });
-
-        let tempContainer = document.createElement('tbody');
-
-        tempContainer.innerHTML = newItemHTML;
-
-        attendanceTable.replaceChildren(...tempContainer.childNodes);
-
-    } catch (error) {
-        console.log(error);
-    }
+    let responce = await fetch(`http://${server}/api/teacher/subjects`, options);
+    let data = await responce.json();
+    return data;
 }
-async function fetch_marks(selectedSubject,tablesData) {
+async function getMeetingsData(subjectId) {
+
+    // Define the headers for the request
     var headers = {
-        // 'Content-Type': 'application/json',
+        'Content-Type': 'application/json',
         'AUTHORIZATION': window.sessionStorage.getItem('authorization')
     };
 
+    // Define the options for the fetch request
     var options = {
         method: 'GET',
         headers: headers,
     };
 
-    try {
-        const response = await fetch(`http://${server}/api/teacher/marks?subject_id=${selectedSubject["id"]}`, options);
-        const data = await response.json();
-        
-        tablesData.marks = data;
+    let responce = await fetch(`http://${server}/api/teacher/meetings?subject_id=${subjectId}`, options);
+    let data = await responce.json();
+    return data;
+}
 
+async function getTasksData(subjectId) {
 
-        let marksTable = document.getElementById("marksTable");
+    // Define the headers for the request
+    var headers = {
+        'Content-Type': 'application/json',
+        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+    };
 
-        //fetching data to dropdown
+    // Define the options for the fetch request
+    var options = {
+        method: 'GET',
+        headers: headers,
+    };
 
-        let newItemHTML = '';
-        data.forEach(element => {
-            newItemHTML += `<tr>
-                                <td>${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</td>
-                                <td>${element["name"]}</td>
-                                <td>${element["mark"]}</td>
-                            </tr>`; 
-        });
+    let responce = await fetch(`http://${server}/api/teacher/tasks?subject_id=${subjectId}`, options);
+    let data = await responce.json();
+    return data;
+}
 
-        let tempContainer = document.createElement('tbody');
+async function getMarksData(subjectId) {
 
-        tempContainer.innerHTML = newItemHTML;
+    // Define the headers for the request
+    var headers = {
+        'Content-Type': 'application/json',
+        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+    };
 
-        marksTable.replaceChildren(...tempContainer.childNodes);
+    // Define the options for the fetch request
+    var options = {
+        method: 'GET',
+        headers: headers,
+    };
 
-    } catch (error) {
-        console.log(error);
-    }
+    let responce = await fetch(`http://${server}/api/teacher/marks?subject_id=${subjectId}`, options);
+    let data = await responce.json();
+    return data;
+}
+
+async function getAttendanceData(subjectId) {
+
+    // Define the headers for the request
+    var headers = {
+        'Content-Type': 'application/json',
+        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+    };
+
+    // Define the options for the fetch request
+    var options = {
+        method: 'GET',
+        headers: headers,
+    };
+
+    let responce = await fetch(`http://${server}/api/teacher/attendance?subject_id=${subjectId}`, options);
+    let data = await responce.json();
+    return data;
 }
 
 
-document.addEventListener('DOMContentLoaded',async function () {
-    // Your JavaScript code here
 
-    var selectedSubject = {
-        "id": {},
-        "name": {},
-    };
+
+
+
+
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', function () {
     
-    var tablesData = {
-        subjects: {},
-        students: {},
-        meetings: {},
-        attendance: {},
-        tasks: {},
-        marks: {},
-    };
-
-    await fetch_subjects(selectedSubject,tablesData);
-    await fetch_students(selectedSubject,tablesData);
-    await fetch_meetings(selectedSubject,tablesData);
-    await fetch_tasks(selectedSubject,tablesData);
-    await fetch_attendance(selectedSubject,tablesData);
-    await fetch_marks(selectedSubject,tablesData);
-
-    // await fetch_attendance(selectedSubject);
-    // await fetch_marks(selectedSubject);
-
-    document.getElementById("subjectsListId").addEventListener("click", async function (event) {
-
-        selectedSubject['id'] = this.childNodes[0].value;
-        selectedSubject['name'] = this.childNodes[0].textContent;
-
-        var button = document.getElementById("subjectsSelectButton");
-
-        button.value = selectedSubject["id"];
-        button.textContent = selectedSubject["name"];
-
-        await fetch_subjects(selectedSubject,tablesData);
-        await fetch_students(selectedSubject,tablesData);
-        await fetch_meetings(selectedSubject,tablesData);
-        await fetch_tasks(selectedSubject,tablesData);
-        await fetch_attendance(selectedSubject,tablesData);
-        await fetch_marks(selectedSubject,tablesData);
-
-        // await fetch_attendance(selectedSubject);
-        // await fetch_marks(selectedSubject);
-
-    });
-
+    if (window.sessionStorage.getItem("role") != 1){
+        window.location.href = "login.html";
+    }
+    
     document.getElementById("logoutButtonId").addEventListener("click", async function (event) {
         window.sessionStorage.removeItem('authorization');
         window.location.href = "login.html";
     });
 
-    var observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'attributes' 
-                && mutation.attributeName === 'class' 
-                && mutation.target.className.includes('active') 
-                && mutation.target.className.includes('show')
-            ){
-                if (mutation.target.id.includes('attendance')){
-                    let createForm = document.getElementById("createFormId") 
-                    let editForm = document.getElementById("editFormId")
-                    let deleteForm = document.getElementById("deleteFormId")
-
-                    document.getElementById("tableButtonsId").classList.remove("visually-hidden");
-                    createAttendanceCreateForm(createForm,tablesData.students,tablesData.meetings);
-
-                    editAttendanceCreateForm(editForm,tablesData.students,tablesData.meetings);
-
-                    deleteAttendanceCreateForm(deleteForm,tablesData.students,tablesData.meetings);
-
-                    createForm.removeEventListener("submit",createAttendanceFormEventListener);                   
-                    createForm.addEventListener("submit",async function(event){
-                        createAttendanceFormEventListener(event,selectedSubject["id"]);
-                        await fetch_subjects(selectedSubject,tablesData);
-                        await fetch_students(selectedSubject,tablesData);
-                        await fetch_meetings(selectedSubject,tablesData);
-                        await fetch_tasks(selectedSubject,tablesData);
-                        await fetch_attendance(selectedSubject,tablesData);
-                        await fetch_marks(selectedSubject,tablesData);
-                    });
-                    
-                    editForm.removeEventListener("submit", editAttendanceFormEventListener);                   
-                    editForm.addEventListener("submit", async function(event){
-                        editAttendanceFormEventListener(event,selectedSubject["id"]);
-                        await fetch_subjects(selectedSubject,tablesData);
-                        await fetch_students(selectedSubject,tablesData);
-                        await fetch_meetings(selectedSubject,tablesData);
-                        await fetch_tasks(selectedSubject,tablesData);
-                        await fetch_attendance(selectedSubject,tablesData);
-                        await fetch_marks(selectedSubject,tablesData);
-                    });
-
-                    deleteForm.removeEventListener("submit", deleteAttendanceFormEventListener);                   
-                    deleteForm.addEventListener("submit", async function(event){
-                        deleteAttendanceFormEventListener(event,selectedSubject["id"]);
-                        await fetch_subjects(selectedSubject,tablesData);
-                        await fetch_students(selectedSubject,tablesData);
-                        await fetch_meetings(selectedSubject,tablesData);
-                        await fetch_tasks(selectedSubject,tablesData);
-                        await fetch_attendance(selectedSubject,tablesData);
-                        await fetch_marks(selectedSubject,tablesData);
-                    });
-
-                } else if (mutation.target.id.includes('marks')){
-                    let createForm = document.getElementById("createFormId") 
-                    let editForm = document.getElementById("editFormId")
-                    let deleteForm = document.getElementById("deleteFormId")
-                    
-                    document.getElementById("tableButtonsId").classList.remove("visually-hidden");
-                    createMarksCreateForm(createForm,tablesData.students,tablesData.tasks);
-
-                    editMarksCreateForm(editForm,tablesData.students,tablesData.tasks);
-                    
-                    deleteMarksCreateForm(deleteForm,tablesData.students,tablesData.tasks);
-
-
-                    createForm.removeEventListener("submit",createMarksFormEventListener);                   
-                    createForm.addEventListener("submit", async function(event){
-                        createMarksFormEventListener(event,selectedSubject["id"]);
-                        await fetch_subjects(selectedSubject,tablesData);
-                        await fetch_students(selectedSubject,tablesData);
-                        await fetch_meetings(selectedSubject,tablesData);
-                        await fetch_tasks(selectedSubject,tablesData);
-                        await fetch_attendance(selectedSubject,tablesData);
-                        await fetch_marks(selectedSubject,tablesData);
-                    });
-                    
-                    editForm.removeEventListener("submit",editMarksFormEventListener);                   
-                    editForm.addEventListener("submit", async function(event){
-                        editMarksFormEventListener(event,selectedSubject["id"]);
-                        await fetch_subjects(selectedSubject,tablesData);
-                        await fetch_students(selectedSubject,tablesData);
-                        await fetch_meetings(selectedSubject,tablesData);
-                        await fetch_tasks(selectedSubject,tablesData);
-                        await fetch_attendance(selectedSubject,tablesData);
-                        await fetch_marks(selectedSubject,tablesData);
-                    });
-
-
-                    deleteForm.removeEventListener("submit",deleteMarksFormEventListener);                   
-                    deleteForm.addEventListener("submit", async function(event){
-                        deleteMarksFormEventListener(event,selectedSubject["id"]);
-                        await fetch_subjects(selectedSubject,tablesData);
-                        await fetch_students(selectedSubject,tablesData);
-                        await fetch_meetings(selectedSubject,tablesData);
-                        await fetch_tasks(selectedSubject,tablesData);
-                        await fetch_attendance(selectedSubject,tablesData);
-                        await fetch_marks(selectedSubject,tablesData);
-                    });
-                }else if (mutation.target.id.includes('tasks')){
-                    let createForm = document.getElementById("createFormId") 
-                    let editForm = document.getElementById("editFormId")
-                    let deleteForm = document.getElementById("deleteFormId")
-                    
-                    document.getElementById("tableButtonsId").classList.remove("visually-hidden");
-                    createTasksCreateForm(createForm);
-                    
-                    editTasksCreateForm(editForm,tablesData.tasks);
-
-                    deleteTasksCreateForm(deleteForm,tablesData.tasks);
-
-                    createForm.removeEventListener("submit",createTasksFormEventListener);                   
-                    createForm.addEventListener("submit", async function(event){
-                        createTasksFormEventListener(event,selectedSubject["id"]);
-                        await fetch_subjects(selectedSubject,tablesData);
-                        await fetch_students(selectedSubject,tablesData);
-                        await fetch_meetings(selectedSubject,tablesData);
-                        await fetch_tasks(selectedSubject,tablesData);
-                        await fetch_attendance(selectedSubject,tablesData);
-                        await fetch_marks(selectedSubject,tablesData);
-                    });
-
-                    editForm.removeEventListener("submit",editTasksFormEventListener);                   
-                    editForm.addEventListener("submit", async function(event){
-                        editTasksFormEventListener(event,selectedSubject["id"]);
-                        await fetch_subjects(selectedSubject,tablesData);
-                        await fetch_students(selectedSubject,tablesData);
-                        await fetch_meetings(selectedSubject,tablesData);
-                        await fetch_tasks(selectedSubject,tablesData);
-                        await fetch_attendance(selectedSubject,tablesData);
-                        await fetch_marks(selectedSubject,tablesData);
-                    });
-                    
-                    deleteForm.removeEventListener("submit",deleteTasksFormEventListener);                   
-                    deleteForm.addEventListener("submit", async function(event){
-                        deleteTasksFormEventListener(event,selectedSubject["id"]);
-                        await fetch_subjects(selectedSubject,tablesData);
-                        await fetch_students(selectedSubject,tablesData);
-                        await fetch_meetings(selectedSubject,tablesData);
-                        await fetch_tasks(selectedSubject,tablesData);
-                        await fetch_attendance(selectedSubject,tablesData);
-                        await fetch_marks(selectedSubject,tablesData);
-                    });
-                } else {
-                    document.getElementById("tableButtonsId").classList.add("visually-hidden");
-
-                }
-
-            }
-        });
+    var selector = new SubjectsView(async () => {
+        let data = await getSubjectsData();
+        return data;
+    })
+    document.getElementById('pills-tab').addEventListener('click', async function (event) {
+        console.log(event.target.textContent)
+        switch (event.target.textContent) {
+            case "Статистика":
+                break;
+            case "Успішність":
+                var temp = new MarksView(async () => {
+                    return {
+                        marks: await getMarksData(selector.selectedSubject.id),
+                        selectedSubject: selector.selectedSubject,
+                        tasks: await getTasksData(selector.selectedSubject.id), 
+                        students: await getStudentsData(selector.selectedSubject.id) 
+                    }
+                });
+                break;
+            case "Відвідуваність":
+                var temp = new AttendanceView(async () => {
+                    return {
+                        attendance: await getAttendanceData(selector.selectedSubject.id),
+                        selectedSubject: selector.selectedSubject,
+                        meetings: await getMeetingsData(selector.selectedSubject.id), 
+                        students: await getStudentsData(selector.selectedSubject.id) 
+                    }
+                });
+                break;
+            case "Завдання":
+                var temp = new TasksView(async () => {
+                    return {
+                        tasks: await getTasksData(selector.selectedSubject.id),
+                        selectedSubject: selector.selectedSubject
+                    }
+                });
+                break;
+            case "Зайняття":
+                var temp = new MeetingsView(async () => {
+                    return await getMeetingsData(selector.selectedSubject.id)
+                });
+                break;
+            case "Студенти":
+                var temp = new StudentsView(async () => {
+                    return await getStudentsData(selector.selectedSubject.id)
+                });
+                break;
+        }
     });
-
-    observer.observe(document.getElementById("pills-tabContent"),{ attributes: true, subtree: true, attributeFilter: ['class'] });
-    
 });
-
-async function createAttendanceFormEventListener(event,subjectId) {
-    event.preventDefault();      
-
-    var studentId = document.getElementById("studentFullnameCreate").value; 
-    var meetingId = parseInt(document.getElementById("studentMeetingCreate").value);
-    var percentage = parseFloat(document.getElementById("studentAttendanceCreate").value);
-
-    var headers = {
-        'Content-Type': 'application/json',
-        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
-    };
-
-    var payload = JSON.stringify({
-        "meeting_id": meetingId,
-        "student_id": studentId,
-        "subject_id": subjectId,
-        "percentage": percentage,
-    });
-    var options = {
-        method: 'POST',
-        headers: headers,
-        body: payload
-    };
-    
-    const response = await fetch(`http://${server}/api/teacher/attendance`, options);
-    if (!response.ok){
-        alert(`Error occured`)
-    }
-}
-async function createTasksFormEventListener(event,subjectId) {
-    event.preventDefault();      
-    
-    var name = document.getElementById("taskNameCreate").value; 
-    var maxPoint = parseFloat(document.getElementById("taskMaxPointCreate").value);
-    var description = document.getElementById("taskDescriptionCreate").value;
-    var dueTo = document.getElementById("taskDeadlineCreate").value;
-
-    var headers = {
-        'Content-Type': 'application/json',
-        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
-    };
-
-    var payload = JSON.stringify({
-        "subject_id": subjectId,
-        "name": name,
-        "description": description,
-        "due_to": dueTo,
-        "max_point": maxPoint,
-    });
-    var options = {
-        method: 'POST',
-        headers: headers,
-        body: payload
-    };
-    
-    const response = await fetch(`http://${server}/api/teacher/tasks`, options);
-    if (!response.ok){
-        alert(`Error occured`)
-    }
-}
-async function createMarksFormEventListener(event,subjectId) {
-    event.preventDefault();      
-
-    var studentId = document.getElementById("studentFullnameCreate").value; 
-    var taskId = parseInt(document.getElementById("studentTaskCreate").value);
-    var mark = parseFloat(document.getElementById("studentMarkCreate").value);
-
-    var headers = {
-        'Content-Type': 'application/json',
-        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
-    };
-
-    var payload = JSON.stringify({
-        "assignment_id": taskId,
-        "student_id": studentId,
-        "subject_id": subjectId,
-        "mark": mark,
-    });
-    var options = {
-        method: 'POST',
-        headers: headers,
-        body: payload
-    };
-    
-    const response = await fetch(`http://${server}/api/teacher/marks`, options);
-    if (!response.ok){
-        alert(`Error occured`)
-    }
-}
-
-
-
-
-
-
-
-async function editAttendanceFormEventListener(event,subjectId) {
-    event.preventDefault();      
-
-    var studentId = document.getElementById("studentFullnameEdit").value; 
-    var meetingId = parseInt(document.getElementById("studentMeetingEdit").value);
-    var percentage = parseFloat(document.getElementById("studentAttendanceEdit").value);
-
-    var headers = {
-        'Content-Type': 'application/json',
-        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
-    };
-
-    var payload = JSON.stringify({
-        "meeting_id": meetingId,
-        "student_id": studentId,
-        "subject_id": subjectId,
-        "percentage": percentage,
-    });
-    var options = {
-        method: 'PUT',
-        headers: headers,
-        body: payload
-    };
-    
-    const response = await fetch(`http://${server}/api/teacher/attendance`, options);
-    if (!response.ok){
-        alert(`Error occured`)
-    }
-}
-
-
-async function editTasksFormEventListener(event,subjectId) {
-    event.preventDefault();      
-
-    var id = parseInt(document.getElementById("taskIdEdit").value); 
-    var name = document.getElementById("taskNameEdit").value; 
-    var maxPoint = parseFloat(document.getElementById("taskMaxPointEdit").value);
-    var description = document.getElementById("taskDescriptionEdit").value;
-    var dueTo = document.getElementById("taskDeadlineEdit").value;
-
-    var headers = {
-        'Content-Type': 'application/json',
-        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
-    };
-
-    var payload = JSON.stringify({
-        "id":id,
-        "subject_id": subjectId,
-        "name": name,
-        "description": description,
-        "due_to": dueTo,
-        "max_point": maxPoint,
-    });
-    var options = {
-        method: 'PUT',
-        headers: headers,
-        body: payload
-    };
-    
-    const response = await fetch(`http://${server}/api/teacher/tasks`, options);
-    if (!response.ok){
-        alert(`Error occured`)
-    }
-}
-
-async function editMarksFormEventListener(event,subjectId) {
-    event.preventDefault();      
-    var studentId = document.getElementById("studentFullnameEdit").value; 
-    var taskId = parseInt(document.getElementById("studentTaskEdit").value);
-    var mark = parseFloat(document.getElementById("studentMarkEdit").value);
-
-    var headers = {
-        'Content-Type': 'application/json',
-        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
-    };
-
-    var payload = JSON.stringify({
-        "assignment_id": taskId,
-        "student_id": studentId,
-        "subject_id": subjectId,
-        "mark": mark,
-    });
-    var options = {
-        method: 'PUT',
-        headers: headers,
-        body: payload
-    };
-    
-    const response = await fetch(`http://${server}/api/teacher/marks`, options);
-    if (!response.ok){
-        alert(`Error occured`)
-    }
-}
-
-async function deleteAttendanceFormEventListener(event,subjectId) {
-    event.preventDefault();      
-
-    var studentId = document.getElementById("studentFullnameDelete").value; 
-    var meetingId = parseInt(document.getElementById("studentMeetingDelete").value);
-
-    var headers = {
-        'Content-Type': 'application/json',
-        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
-    };
-
-    var payload = JSON.stringify({
-        "meeting_id": meetingId,
-        "student_id": studentId,
-        "subject_id": subjectId,
-    });
-    var options = {
-        method: 'DELETE',
-        headers: headers,
-        body: payload
-    };
-    
-    const response = await fetch(`http://${server}/api/teacher/attendance`, options);
-    if (!response.ok){
-        alert(`Error occured`)
-    }
-}
-
-
-async function deleteTasksFormEventListener(event,subjectId) {
-    event.preventDefault();      
-
-    var id = parseInt(document.getElementById("taskIdDelete").value); 
-
-    var headers = {
-        'Content-Type': 'application/json',
-        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
-    };
-
-    var payload = JSON.stringify({
-        "id":id,
-    });
-    var options = {
-        method: 'DELETE',
-        headers: headers,
-        body: payload
-    };
-    
-    const response = await fetch(`http://${server}/api/teacher/tasks`, options);
-    if (!response.ok){
-        alert(`Error occured`)
-    }
-}
-
-async function deleteMarksFormEventListener(event,subjectId) {
-    event.preventDefault();      
-    var studentId = document.getElementById("studentFullnameDelete").value; 
-    var taskId = parseInt(document.getElementById("studentTaskDelete").value);
-
-    var headers = {
-        'Content-Type': 'application/json',
-        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
-    };
-
-    var payload = JSON.stringify({
-        "assignment_id": taskId,
-        "student_id": studentId,
-        "subject_id": subjectId,
-    });
-    var options = {
-        method: 'DELETE',
-        headers: headers,
-        body: payload
-    };
-    
-    const response = await fetch(`http://${server}/api/teacher/marks`, options);
-    if (!response.ok){
-        alert(`Error occured`)
-    }
-}
-
-
-
-function createAttendanceCreateForm(form,students,meetings){
-    var title = document.getElementById("createModalLabel");
-
-    let newItemHTML = 
-    `<div class="modal-body">
-        <div class="mb-3">
-            <label for="studentFullnameCreate" class="form-label">ПІБ Студента</label>
-                <select class="form-select" aria-label="Default select example" id="studentFullnameCreate">`;
-    students.forEach(element => {
-        newItemHTML+=`<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</option>`
-    });
-    newItemHTML += `</select></div>
-        <div class="mb-3">
-            <label for="studentMeetingCreate" class="form-label">Зайняття</label>
-            <select class="form-select" aria-label="Default select example" id="studentMeetingCreate">`;
-    meetings.forEach(element => {
-        newItemHTML+=`<option value="${element["id"]}">${element["name"]}</option>`
-    });
-    
-    newItemHTML += `</select></div>
-        <div class="mb-3">
-            <label for="studentAttendanceCreate" class="form-label">Відсоток присутності</label>
-            <input type="text" class="form-control" id="studentAttendanceCreate">
-        </div>
-    </div>
-    <div class="modal-footer"><button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Створити</button></div>`;
-    
-    let tempContainer = document.createElement('div');
-
-    tempContainer.innerHTML = newItemHTML;
-
-    form.replaceChildren(...tempContainer.childNodes);
-
-    title.textContent='Створити запис';
-}
-
-function createMarksCreateForm(form,students,tasks){
-    var title = document.getElementById("createModalLabel");
-
-    let newItemHTML = `<div class="modal-body">
-        <div class="mb-3">
-            <label for="studentFullnameCreate" class="form-label">ПІБ Студента</label>
-            <select class="form-select" aria-label="Default select example" id="studentFullnameCreate">`;
-    students.forEach(element => {
-        newItemHTML+=`<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</option>`
-    });
-    newItemHTML += `</select></div>
-        <div class="mb-3">
-            <label for="studentTaskCreate" class="form-label">Завдання</label>
-            <select class="form-select" aria-label="Default select example" id="studentTaskCreate">`;
-    tasks.forEach(element => {
-        newItemHTML+=`<option value="${element["id"]}">${element["name"]}</option>`;
-    });
-    newItemHTML += `</select></div>
-        <div class="mb-3">
-            <label for="studentMarkCreate" class="form-label">Балл</label>
-            <input type="text" class="form-control" id="studentMarkCreate"></div>            
-        </div>
-        <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Створити</button>
-    </div>`;
-    let tempContainer = document.createElement('div');
-
-    tempContainer.innerHTML = newItemHTML;
-
-    form.replaceChildren(...tempContainer.childNodes);
-
-    title.textContent='Створити запис';
-}
-function createTasksCreateForm(form){
-    var title = document.getElementById("createModalLabel");
-
-    let newItemHTML = `<div class="modal-body">
-        <div class="mb-3">
-            <label for="taskNameCreate" class="form-label">Назва</label>
-            <input type="text" class="form-control" id="taskNameCreate">
-        </div>
-        <div class="mb-3">
-            <label for="taskDescriptionCreate" class="form-label">Опис</label>
-            <input type="text" class="form-control" id="taskDescriptionCreate"> 
-        </div>
-        <div class="mb-3">
-            <label for="taskDeadlineCreate" class="form-label">Дата та час</label>
-            <input type="text" class="form-control" id="taskDeadlineCreate"></div>            
-        </div>
-        <div class="mb-3">
-            <label for="taskMaxPointCreate" class="form-label">Максимальний балл</label>
-            <input type="text" class="form-control" id="taskMaxPointCreate"></div>            
-        </div>
-        <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Створити</button>
-    </div>`;
-    let tempContainer = document.createElement('div');
-
-    tempContainer.innerHTML = newItemHTML;
-
-    form.replaceChildren(...tempContainer.childNodes);
-
-    title.textContent='Створити запис';
-}
-
-
-function editAttendanceCreateForm(form,students,meetings){
-    var title = document.getElementById("editModalLabel");
-
-    let newItemHTML = 
-    `<div class="modal-body">
-        <div class="mb-3">
-            <label for="studentFullnameEdit" class="form-label">ПІБ Студента</label>
-                <select class="form-select" aria-label="Default select example" id="studentFullnameEdit">`;
-    students.forEach(element => {
-        newItemHTML+=`<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</option>`
-    });
-    newItemHTML += `</select></div>
-        <div class="mb-3">
-            <label for="studentMeetingEdit" class="form-label">Зайняття</label>
-            <select class="form-select" aria-label="Default select example" id="studentMeetingEdit">`;
-    meetings.forEach(element => {
-        newItemHTML+=`<option value="${element["id"]}">${element["name"]}</option>`
-    });
-    
-    newItemHTML += `</select></div>
-        <div class="mb-3">
-            <label for="studentAttendanceEdit" class="form-label">Відсоток присутності</label>
-            <input type="text" class="form-control" id="studentAttendanceEdit">
-        </div>
-    </div>
-    <div class="modal-footer"><button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Редагувати</button></div>`;
-    
-    let tempContainer = document.createElement('div');
-
-    tempContainer.innerHTML = newItemHTML;
-
-    form.replaceChildren(...tempContainer.childNodes);
-
-    title.textContent='Редагувати запис';
-}
-
-function editMarksCreateForm(form,students,tasks){
-    var title = document.getElementById("editModalLabel");
-
-    let newItemHTML = `<div class="modal-body">
-        <div class="mb-3">
-            <label for="studentFullnameEdit" class="form-label">ПІБ Студента</label>
-            <select class="form-select" aria-label="Default select example" id="studentFullnameEdit">`;
-    students.forEach(element => {
-        newItemHTML+=`<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</option>`
-    });
-    newItemHTML += `</select></div>
-        <div class="mb-3">
-            <label for="studentTaskEdit" class="form-label">Завдання</label>
-            <select class="form-select" aria-label="Default select example" id="studentTaskEdit">`;
-    tasks.forEach(element => {
-        newItemHTML+=`<option value="${element["id"]}">${element["name"]}</option>`;
-    });
-    newItemHTML += `</select></div>
-        <div class="mb-3">
-            <label for="studentMarkEdit" class="form-label">Балл</label>
-            <input type="text" class="form-control" id="studentMarkEdit"></div>            
-        </div>
-        <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Редагувати</button>
-    </div>`;
-    let tempContainer = document.createElement('div');
-
-    tempContainer.innerHTML = newItemHTML;
-
-    form.replaceChildren(...tempContainer.childNodes);
-
-    title.textContent='Редагувати запис';
-}
-function editTasksCreateForm(form,tasks){
-    var title = document.getElementById("editModalLabel");
-
-    let newItemHTML = `<div class="modal-body"><div class="mb-3">
-    <label for="taskIdEdit" class="form-label">Завдання</label>
-    <select class="form-select" aria-label="Default select example" id="taskIdEdit">`
-    tasks.forEach(element => {
-        newItemHTML+=`<option value="${element["id"]}">${element["name"]}</option>`;
-    });
-
-    newItemHTML += `</select></div><div class="mb-3">
-            <label for="taskNameEdit" class="form-label">Назва</label>
-            <input type="text" class="form-control" id="taskNameEdit">
-        </div>
-        <div class="mb-3">
-            <label for="taskDescriptionEdit" class="form-label">Опис</label>
-            <input type="text" class="form-control" id="taskDescriptionEdit"> 
-        </div>
-        <div class="mb-3">
-            <label for="taskDeadlineEdit" class="form-label">Дата та час</label>
-            <input type="text" class="form-control" id="taskDeadlineEdit"></div>            
-        </div>
-        <div class="mb-3">
-            <label for="taskMaxPointEdit" class="form-label">Максимальний балл</label>
-            <input type="text" class="form-control" id="taskMaxPointEdit"></div>            
-        </div>
-        <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Створити</button>
-        </div>
-    </div>`;
-    let tempContainer = document.createElement('div');
-
-    tempContainer.innerHTML = newItemHTML;
-
-    form.replaceChildren(...tempContainer.childNodes);
-
-    title.textContent='Редагувати запис';
-}
-
-
-
-function deleteAttendanceCreateForm(form,students,meetings){
-    let newItemHTML = 
-    `<div class="modal-body">
-        <div class="mb-3">
-            <label for="studentFullnameDelete" class="form-label">ПІБ Студента</label>
-                <select class="form-select" aria-label="Default select example" id="studentFullnameDelete">`;
-    students.forEach(element => {
-        newItemHTML+=`<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</option>`
-    });
-    newItemHTML += `</select></div>
-        <div class="mb-3">
-            <label for="studentMeetingDelete" class="form-label">Зайняття</label>
-            <select class="form-select" aria-label="Default select example" id="studentMeetingDelete">`;
-    meetings.forEach(element => {
-        newItemHTML+=`<option value="${element["id"]}">${element["name"]}</option>`
-    });
-    
-    newItemHTML += `</select></div>
-    </div>
-    <div class="modal-footer"><button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Видалити</button></div>`;
-    
-    let tempContainer = document.createElement('div');
-
-    tempContainer.innerHTML = newItemHTML;
-
-    form.replaceChildren(...tempContainer.childNodes);
-}
-
-function deleteMarksCreateForm(form,students,tasks){
-
-    let newItemHTML = `<div class="modal-body">
-        <div class="mb-3">
-            <label for="studentFullnameDelete" class="form-label">ПІБ Студента</label>
-            <select class="form-select" aria-label="Default select example" id="studentFullnameDelete">`;
-    students.forEach(element => {
-        newItemHTML+=`<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</option>`
-    });
-    newItemHTML += `</select></div>
-        <div class="mb-3">
-            <label for="studentTaskDelete" class="form-label">Завдання</label>
-            <select class="form-select" aria-label="Default select example" id="studentTaskDelete">`;
-    tasks.forEach(element => {
-        newItemHTML+=`<option value="${element["id"]}">${element["name"]}</option>`;
-    });
-    newItemHTML += `</select></div>
-        <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Видалити</button>
-    </div>`;
-    let tempContainer = document.createElement('div');
-
-    tempContainer.innerHTML = newItemHTML;
-
-    form.replaceChildren(...tempContainer.childNodes);
-}
-function deleteTasksCreateForm(form,tasks){
-    let newItemHTML = `<div class="modal-body"><div class="mb-3">
-    <label for="taskIdDelete" class="form-label">Завдання</label>
-    <select class="form-select" aria-label="Default select example" id="taskIdDelete">`
-    tasks.forEach(element => {
-        newItemHTML+=`<option value="${element["id"]}">${element["name"]}</option>`;
-    });
-
-    newItemHTML += `</select></div>
-        </div>
-        <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Видалити</button>
-        </div>
-    </div>`;
-    let tempContainer = document.createElement('div');
-
-    tempContainer.innerHTML = newItemHTML;
-
-    form.replaceChildren(...tempContainer.childNodes);
-}
-
-
-
-
-

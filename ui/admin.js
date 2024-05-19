@@ -1,4 +1,4 @@
-const server = 'localhost:8080';
+const server = window.sessionStorage.getItem("server");
 
 
 class TeachersView {
@@ -3105,6 +3105,24 @@ async function getLogsData(lowerBound,upperBound,eventText) {
 
 
 document.addEventListener('DOMContentLoaded',function () {
+
+  if (window.sessionStorage.getItem("role") != 3){
+      window.location.href = "login.html";
+  }
+
+  document.getElementById("logoutButton").addEventListener("click", async function (event) {
+      window.sessionStorage.removeItem('authorization');
+      window.location.href = "login.html";
+  });
+
+
+
+
+
+
+
+
+
   let view = new ServiceView()
   var page = document.getElementById("pageContainer");
   var temp = new TeachersView(page,async ()=>{
@@ -3315,8 +3333,12 @@ class ServiceView{
       headers: headers,
       body: JSON.stringify({"action":"Archive"})
     };
-  
-    fetch(`http://${server}/api/admin/db`, options);   
+    
+    const responce = await fetch(`http://${server}/api/admin/db`, options);   
+    
+    if (!responce.ok){
+      alert("Error occured");
+    }
   }
   async #onRestoreButtonClickEventListener(){
     var headers = {
@@ -3331,9 +3353,13 @@ class ServiceView{
        body: JSON.stringify({"action":"Restore"})
      };
    
-     fetch(`http://${server}/api/admin/db`, options);
+    const responce = await fetch(`http://${server}/api/admin/db`, options);   
+    
+    if (!responce.ok){
+      alert("Error occured");
+    }
   }
-  #onCloneButtonClickEventListener(){
+  async #onCloneButtonClickEventListener(){
     var headers = {
       'Content-Type': 'application/json',
       'AUTHORIZATION': window.sessionStorage.getItem('authorization')
@@ -3346,7 +3372,12 @@ class ServiceView{
        body: JSON.stringify({"action":"Clone"})
      };
    
-     fetch(`http://${server}/api/admin/db`, options);
+    
+    const responce = await fetch(`http://${server}/api/admin/db`, options);   
+    
+    if (!responce.ok){
+      alert("Error occured");
+    }
 
   }
 }

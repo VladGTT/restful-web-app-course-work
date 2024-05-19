@@ -35,17 +35,18 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
 
     // Make the POST request
     try{
-        let responce = await fetch(`http://${server}/login`, options);
+        let responce = await fetch(`http://${server}/api/login`, options);
         let data = await responce.json();
 
         console.log('POST request successful', data);
 
         window.sessionStorage.setItem("authorization", data["authorization"])
- 
-        window.location.href = `${role}.html`;
+        window.sessionStorage.setItem("role", roleMapping[role])
+        window.sessionStorage.setItem("server", server)
+        
+        window.location.href = `${role}.html`;  
 
     }catch(error){
-        
         console.error(error);
         alert("Error occured")
     }
