@@ -1,5 +1,8 @@
 const server = window.sessionStorage.getItem("server");
-
+function validatePassword(password){
+    const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    return pattern.test(password)
+}
 async function fetch_subjects(selectedSubject) {
     var headers = {
         // 'Content-Type': 'application/json',
@@ -125,17 +128,60 @@ async function fetch_marks(selectedSubject) {
 
 async function fetch_profile(){
 
+    var headers = {
+        // 'Content-Type': 'application/json',
+        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+    };
+
+    var options = {
+        method: 'GET',
+        headers: headers,
+    };
+
+    try {
+        const response = await fetch(`http://${server}/api/student/profile`, options);
+        const data = await response.json();
+
+        document.getElementById("profileModalLabel").textContent = `${data[0]["lastname"]} ${data[0]["secondname"]} ${data[0]["firstname"]} [${data[0]["group"]}]`;
+        document.getElementById("profileEmail").value = `${data[0]["email"]}`;
+    } catch (error) {
+        console.log(error);
+    }
 }
 async function update_password(){
-    
+    var headers = {
+        // 'Content-Type': 'application/json',
+        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+    };
+    let password = document.getElementById("profilePassword").value;
+    if (!validatePassword(password)){
+        alert("Incorrect password")
+        return
+    }
+    var payload = {
+        password: password 
+    }
+    var options = {
+        method: 'PUT',
+        headers: headers,   
+        body: JSON.stringify(payload)
+    };
+
+    try {
+        const response = await fetch(`http://${server}/api/student/profile`, options);
+        const data = await response.json();
+        console.log(data);
+
+    } catch (error) {
+        console.log(error);
+    }
 }
 
 document.addEventListener('DOMContentLoaded',async function () {
-    // Your JavaScript code here
+
     if (window.sessionStorage.getItem("role") != 2){
         window.location.href = "login.html";
     }
-
 
     var selectedSubject = {
         "id": {},
@@ -165,4 +211,7 @@ document.addEventListener('DOMContentLoaded',async function () {
         window.sessionStorage.removeItem('authorization');
         window.location.href = "login.html";
     });
+
+    document.getElementById("profileButton").addEventListener("click",fetch_profile)
+    document.getElementById("profileUpdateForm").addEventListener("submit",update_password)
 });

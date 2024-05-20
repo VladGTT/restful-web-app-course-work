@@ -13,10 +13,46 @@
         crossorigin="anonymous"></script>
     <script src="teacher.js"></script>
 </head>
+<style>
+    #pills-tab {
+    display: flex;
+    justify-content: space-between; /* Distribute space evenly */
+    align-items: center; /* Vertically center the items */
+    padding: 0; /* Remove default padding */
+    margin: 0; /* Remove default margin */
+    list-style: none; /* Remove default list styling */
+}
+
+#pills-tab li {
+    display: flex;
+    align-items: center;
+}
+
+#pills-tab .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem; /* Adjust padding as needed */
+}
+
+#pills-tab .bi {
+    margin-right: 0.5rem; /* Adjust spacing between icon and text */
+}
+
+  </style>
 <body>
     <div class="container-fluid">
         <header class="shadow rounded d-flex justify-content-center py-3">
             <ul class="nav nav-pills" id="pills-tab" role="tablist">
+                <li>
+                    <div id="profileButton" class="d-block link-body-emphasis text-decoration-none"  data-bs-toggle="modal" data-bs-target="#profileModal">
+                      <a>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                            <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                            <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+                          </svg>
+                      </a>
+                    </div>
+                  </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="pills-stats-tab" data-bs-toggle="pill">Статистика</button>
                 </li>
@@ -95,6 +131,30 @@
     </div>
     <div id="tableContainer" class="container-fluid shadow-lg mt-3 table-responsive small">
     </div>
-        
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="profileModalLabel">Профіль</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="profileUpdateForm">
+                  <div class="modal-body">
+                    <div class="form-floating mb-3">
+                      <input type="email" class="form-control rounded-3" id="profileEmail" placeholder="name@example.com" disabled>
+                      <label for="profileEmail">Email address</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                      <input type="password" class="form-control rounded-3" id="profilePassword" placeholder="Password">
+                      <label for="profilePassword">New Password</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" data-bs-dismiss="modal" type="submit">Save changes</button>
+                </div>
+            </form>
+          </div>
+        </div>
+      </div>
 </body>
 </html>

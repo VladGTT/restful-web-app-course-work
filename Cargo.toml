@@ -13,9 +13,9 @@ jwt-simple = "0.12.9"
 serde = "1.0.197"
 chrono = {version = "0.4.34", features = ["serde"]}
 validator = { version = "0.17", features = ["derive"] }
-regex = "1.10.4"
 
 sea-orm = { version = "0.12", features = [ "sqlx-mysql","runtime-tokio-rustls", "macros"] }
 sea-query = { version = "0.30.7", features = ["derive"] }
 actix-cors = "0.7.0"
 actix-files = "0.6.5"
+fancy-regex = "0.13.0"

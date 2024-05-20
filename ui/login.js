@@ -65,6 +65,7 @@ document.getElementById("loginForm").addEventListener("submit", async function (
 
     window.sessionStorage.setItem("authorization", data["authorization"])
     window.sessionStorage.setItem("role", roleMapping[role])
+    
     window.sessionStorage.setItem("server", server)
 
     window.location.href = `${role}.html`;

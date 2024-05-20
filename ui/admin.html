@@ -19,20 +19,24 @@
         padding: 0;
         margin: 0;
     }
+
     .dropdown-menu li {
         display: flex;
         align-items: center;
         padding: 5px 10px;
     }
+
     .dropdown-menu svg {
         margin-right: 10px;
     }
+
     .dropdown-item {
         text-decoration: none;
         color: inherit;
         flex-grow: 1;
     }
 </style>
+
 <body>
     <header class="shadow rounded d-flex py-3">
         <ul class="nav nav-pills ps-3 w-100 d-flex align-items-center justify-content-between">
@@ -60,6 +64,19 @@
         </div>
         <div class="offcanvas-body">
             <ul id="navPanel" class="nav flex-column">
+                <li class="nav-item ps-3">
+                    <div id="profileButton" class="d-block link-body-emphasis text-decoration-none" data-bs-toggle="modal"
+                      data-bs-target="#profileModal">
+                      <a>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor"
+                          class="bi bi-person-circle" viewBox="0 0 16 16">
+                          <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+                          <path fill-rule="evenodd"
+                            d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1" />
+                        </svg>
+                      </a>
+                    </div>
+                  </li>
                 <li class="nav-item"><a href="#" class="nav-link">Студенти</a></li>
                 <li class="nav-item"><a href="#" class="nav-link">Вчителя</a></li>
                 <li class="nav-item"><a href="#" class="nav-link">Успішність</a></li>
@@ -87,6 +104,7 @@
                     <li id="cloneButtonId">
                         <a class="dropdown-item">Копіювати</a>
                     </li>
+
                 </ul>
             </div>
         </div>
@@ -96,7 +114,32 @@
     </div>
 
 
-
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="profileModalLabel">Профіль</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="profileUpdateForm">
+              <div class="modal-body">
+                <div class="form-floating mb-3">
+                  <input type="email" class="form-control rounded-3" id="profileEmail" placeholder="name@example.com"
+                    disabled>
+                  <label for="profileEmail">Email address</label>
+                </div>
+                <div class="form-floating mb-3">
+                  <input type="password" class="form-control rounded-3" id="profilePassword" placeholder="Password">
+                  <label for="profilePassword">New Password</label>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-primary" data-bs-dismiss="modal" type="submit">Save changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
 
 
 

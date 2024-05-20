@@ -1,5 +1,59 @@
 const server = window.sessionStorage.getItem("server");
+function validatePassword(password){
+  const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+  return pattern.test(password)
+}
 
+async function fetch_profile(){
+
+  var headers = {
+      // 'Content-Type': 'application/json',
+      'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+  };
+
+  var options = {
+      method: 'GET',
+      headers: headers,
+  };
+
+  try {
+      const response = await fetch(`http://${server}/api/admin/profile`, options);
+      const data = await response.json();
+
+      document.getElementById("profileModalLabel").textContent = `[ADMIN]`;
+      document.getElementById("profileEmail").value = `${data.email}`;
+  } catch (error) {
+      console.log(error);
+  }
+}
+async function update_password(){
+  var headers = {
+      'Content-Type': 'application/json',
+      'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+  };
+  let password = document.getElementById("profilePassword").value;
+  if (!validatePassword(password)){
+      alert("Incorrect password")
+      return
+  }
+  var payload = {
+      password: password 
+  }
+  var options = {
+      method: 'PUT',
+      headers: headers,   
+      body: JSON.stringify(payload)
+  };
+
+  try {
+      const response = await fetch(`http://${server}/api/admin/profile`, options);
+      const data = await response.json();
+      console.log(data);
+
+  } catch (error) {
+      console.log(error);
+  }
+}
 
 class TeachersView {
 
@@ -3116,7 +3170,8 @@ document.addEventListener('DOMContentLoaded',function () {
   });
 
 
-
+  document.getElementById("profileButton").addEventListener("click",fetch_profile)
+  document.getElementById("profileUpdateForm").addEventListener("submit",update_password)
 
 
 

@@ -29,7 +29,7 @@ pub async fn get_admin_profile(req: HttpRequest,pool: web::Data<DatabaseConnecti
         .select_only()
         .columns([
             accounts::Column::Email,
-            accounts::Column::Password,
+            // accounts::Column::Password,
         ])
         .filter(accounts::Column::Email.eq(account.email.clone()))
         .into_json()
