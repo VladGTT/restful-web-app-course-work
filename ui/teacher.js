@@ -1,4 +1,32 @@
+
 const server = window.sessionStorage.getItem("server");
+
+async function save_pdf(){
+    var win = window.open('', '', 'height=700,width=700');
+    const table = document.getElementById("table").parentNode 
+    const docString = `<!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Document</title>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    </head>
+    <body>
+      <div class="container-fluid shadow-lg mt-3 table-responsive small">
+        <table class="table table-striped table-sm">
+          ${table.innerHTML}
+        </table>
+      </div>
+    </body>
+    </html>`;
+    win.document.write(docString)
+    win.document.close()
+    win.print()
+}
+  
+
 
 
 function validatePassword(password){
@@ -203,7 +231,9 @@ class MeetingsView {
         document.getElementById("tableButtonsId").classList.add("visually-hidden")
 
         document.getElementById("table").addEventListener("click", this.onTableClickEventHandler)
-
+        
+        document.getElementById("printButton").addEventListener("click",save_pdf)
+        
         this.fetchData()
     }
 
@@ -344,6 +374,8 @@ class TasksView {
 
         let createForm = document.getElementById("createFormId");
         createForm.addEventListener("submit", this.onSubmitCreationEventHandler);
+
+        document.getElementById("printButton").addEventListener("click",save_pdf)
 
         this.fetchData();
     }
@@ -668,6 +700,8 @@ class AttendanceView {
 
         let createForm = document.getElementById("createFormId");
         createForm.addEventListener("submit", this.onSubmitCreationEventHandler);
+
+        document.getElementById("printButton").addEventListener("click",save_pdf)
 
         this.fetchData();
     }
@@ -1010,6 +1044,8 @@ class MarksView {
 
         let createForm = document.getElementById("createFormId");
         createForm.addEventListener("submit", this.onSubmitCreationEventHandler);
+
+        document.getElementById("printButton").addEventListener("click",save_pdf)
 
         this.fetchData();
     }

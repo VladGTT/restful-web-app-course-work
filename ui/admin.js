@@ -1,7 +1,36 @@
+
 const server = window.sessionStorage.getItem("server");
 function validatePassword(password){
   const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
   return pattern.test(password)
+}
+
+async function save_pdf(){
+  var win = window.open('', '', 'height=700,width=700');
+  const table = document.getElementById("table").parentNode 
+  const docString = `<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  </head>
+  <body>
+    <div class="container-fluid shadow-lg mt-3 table-responsive small">
+      <table class="table table-striped table-sm">
+        ${table.innerHTML}
+      </table>
+    </div>
+  </body>
+  </html>`;
+  win.document.write(docString)
+  win.document.close()
+  win.print()
+  // const parser = new DOMParser();
+  // const doc = parser.parseFromString(docString, 'text/html');
+  // doc.print()
 }
 
 async function fetch_profile(){
@@ -72,6 +101,12 @@ class TeachersView {
     let newItemHTML =
       `
     <div id="tableButtonsId" class="col d-flex flex-row-reverse">
+    <div class="p-1" id="printButton">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+        <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/>
+        <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1"/>
+      </svg>
+    </div>
     <div class="p-1" data-bs-toggle="modal" data-bs-target="#deleteModalId">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
             <path
@@ -108,7 +143,7 @@ class TeachersView {
             <th scope="col">Пошта</th>
           </tr>
         </thead>
-        <tbody id="teachersTable" class="table-group-divider text-break">
+        <tbody id="table" class="table-group-divider text-break">
        </tbody>
       </table>
     </div>
@@ -193,7 +228,7 @@ class TeachersView {
     let deleteModal = document.getElementById("deleteModalId");
     deleteModal.addEventListener("show.bs.modal", this.onDeleteIconClickEventHandler);
 
-    let table = document.getElementById("teachersTable");
+    let table = document.getElementById("table");
     table.addEventListener("click", this.onTableClickEventHandler)
 
     let editForm = document.getElementById("editFormId");
@@ -205,11 +240,13 @@ class TeachersView {
     let createForm = document.getElementById("createFormId");
     createForm.addEventListener("submit", this.onSubmitCreationEventHandler)
 
+    document.getElementById("printButton").addEventListener("click",save_pdf)
+
     this.fetchData()
   }
 
   async fetchData() {
-    let table = document.getElementById("teachersTable");
+    let table = document.getElementById("table");
 
     let data = await this.callback();
     //fetching data to dropdown
@@ -426,6 +463,12 @@ class StudentsView {
     let newItemHTML =
       `
     <div id="tableButtonsId" class="col d-flex flex-row-reverse">
+    <div class="p-1" id="printButton">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+        <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/>
+        <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1"/>
+      </svg>
+    </div>
     <div class="p-1" data-bs-toggle="modal" data-bs-target="#deleteModalId">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
             <path
@@ -558,6 +601,8 @@ class StudentsView {
 
     let createForm = document.getElementById("createFormId");
     createForm.addEventListener("submit", this.onSubmitCreationEventHandler)
+
+    document.getElementById("printButton").addEventListener("click",save_pdf)
 
     this.fetchData()
   }
@@ -776,6 +821,12 @@ class SubjectsView {
     
     let newItemHTML = `
     <div id="tableButtonsId" class="col d-flex flex-row-reverse">
+    <div class="p-1" id="printButton">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+        <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/>
+        <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1"/>
+      </svg>
+    </div>
     <div class="p-1" data-bs-toggle="modal" data-bs-target="#deleteModalId">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
             <path
@@ -886,6 +937,8 @@ class SubjectsView {
 
     let createForm = document.getElementById("createFormId");
     createForm.addEventListener("submit", this.onSubmitCreationEventHandler);
+
+    document.getElementById("printButton").addEventListener("click",save_pdf)
 
     this.fetchData();
   }
@@ -1141,6 +1194,12 @@ class MeetingsView {
     
     let newItemHTML = `
     <div id="tableButtonsId" class="col d-flex flex-row-reverse">
+    <div class="p-1" id="printButton">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+      <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/>
+      <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1"/>
+    </svg>
+    </div>
     <div class="p-1" data-bs-toggle="modal" data-bs-target="#deleteModalId">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
             <path
@@ -1250,6 +1309,8 @@ class MeetingsView {
 
     let createForm = document.getElementById("createFormId");
     createForm.addEventListener("submit", this.onSubmitCreationEventHandler);
+
+    document.getElementById("printButton").addEventListener("click",save_pdf)
 
     this.fetchData();
   }
@@ -1493,6 +1554,12 @@ class TasksView {
     
     let newItemHTML = `
     <div id="tableButtonsId" class="col d-flex flex-row-reverse">
+    <div class="p-1" id="printButton">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+      <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/>
+      <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1"/>
+    </svg>
+    </div>
     <div class="p-1" data-bs-toggle="modal" data-bs-target="#deleteModalId">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
             <path
@@ -1604,6 +1671,8 @@ class TasksView {
 
     let createForm = document.getElementById("createFormId");
     createForm.addEventListener("submit", this.onSubmitCreationEventHandler);
+
+    document.getElementById("printButton").addEventListener("click",save_pdf)
 
     this.fetchData();
   }
@@ -2116,6 +2185,12 @@ class MarksView {
     
     let newItemHTML = `
     <div id="tableButtonsId" class="col d-flex flex-row-reverse">
+    <div class="p-1" id="printButton">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+      <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/>
+      <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1"/>
+    </svg>
+    </div>
     <div class="p-1" data-bs-toggle="modal" data-bs-target="#deleteModalId">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
             <path
@@ -2227,6 +2302,8 @@ class MarksView {
 
     let createForm = document.getElementById("createFormId");
     createForm.addEventListener("submit", this.onSubmitCreationEventHandler);
+
+    document.getElementById("printButton").addEventListener("click",save_pdf)
 
     this.fetchData();
   }
@@ -2501,6 +2578,12 @@ class AttendanceView {
     
     let newItemHTML = `
     <div id="tableButtonsId" class="col d-flex flex-row-reverse">
+    <div class="p-1" id="printButton">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+        <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/>
+        <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1"/>
+      </svg>
+    </div>
     <div class="p-1" data-bs-toggle="modal" data-bs-target="#deleteModalId">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
             <path
@@ -2611,6 +2694,8 @@ class AttendanceView {
 
     let createForm = document.getElementById("createFormId");
     createForm.addEventListener("submit", this.onSubmitCreationEventHandler);
+
+    document.getElementById("printButton").addEventListener("click",save_pdf)
 
     this.fetchData();
   }
@@ -2881,13 +2966,19 @@ class LogsView {
     let newItemHTML = `
     <div class="container-fluid mt-3 row">
     <div class="mb-3 col">
-      <input type="email" class="form-control" id="timeFilterLowerboundId" placeholder="Час з">
+      <input type="text" class="form-control" id="timeFilterLowerboundId" placeholder="Час з">
     </div>
     <div class="mb-3 col">
-      <input type="email" class="form-control" id="timeFilterUpperboundId" placeholder="Час по">
+      <input type="text" class="form-control" id="timeFilterUpperboundId" placeholder="Час по">
     </div>
     <div class="mb-3 col">
-      <input type="email" class="form-control" id="eventFilterId" placeholder="Подія">
+      <input type="text" class="form-control" id="eventFilterId" placeholder="Подія">
+    </div>
+    <div class="col" id="printButton">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+        <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/>
+        <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1"/>
+      </svg>
     </div>
   </div>
 
@@ -2905,6 +2996,7 @@ class LogsView {
        </tbody>
       </table>
     </div>
+
     `;
     let tempContainer = document.createElement('div');
     tempContainer.innerHTML = newItemHTML;
@@ -2919,6 +3011,7 @@ class LogsView {
     let eventFilter = document.getElementById("eventFilterId");
     eventFilter.addEventListener("input",this.onEventFilterTextChanged)
 
+    document.getElementById("printButton").addEventListener("click",save_pdf)
 
     this.fetchData();
   }
