@@ -12,13 +12,13 @@ use crate::services::{
         subjects::get_student_subjects,
         tasks::get_student_tasks,
         teachers::get_student_teachers,
-        //stats
+        stats::get_student_stats
     },
     teacher::{
         attendance::{delete_teacher_attendance, get_teacher_attendance, post_teacher_attendance, put_teacher_attendance},
         marks::{delete_teacher_marks,get_teacher_marks,post_teacher_marks,put_teacher_marks},
         meetings::get_teacher_meetings,
-        //stats
+        stats::get_teacher_stats,
         profile::{get_teacher_profile,put_teacher_profile},
         students::get_teacher_students,
         subjects::get_teacher_subjects,
@@ -111,6 +111,7 @@ async fn main() -> std::io::Result<()> {
                 .service(post_teacher_tasks)
                 .service(put_teacher_tasks)
                 .service(delete_teacher_tasks)
+                .service(get_teacher_stats)
             )        
             .service(
                 web::scope("/student")   
@@ -121,6 +122,7 @@ async fn main() -> std::io::Result<()> {
                 .service(get_student_tasks)
                 .service(get_student_meetings)
                 .service(get_student_teachers)
+                .service(get_student_stats)
             )
             .service(
                 web::scope("/admin")

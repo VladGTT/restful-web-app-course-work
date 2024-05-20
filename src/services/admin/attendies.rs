@@ -1,8 +1,7 @@
 
 use crate::entities::{students, subjects, subjects_attendies, users};
 use actix_web::{get,post,delete, web, HttpResponse, Responder};
-use sea_orm::{query::*, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, RelationTrait, TransactionTrait};
-use sea_query::Expr;
+use sea_orm::{query::*, ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel, RelationTrait, TransactionTrait};
 use validator::Validate;
 
 

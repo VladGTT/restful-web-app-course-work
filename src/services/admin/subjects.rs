@@ -1,9 +1,8 @@
 use crate::entities::{subjects, teachers, users};
 use actix_web::{get,post,put,delete, web, HttpResponse, Responder};
-use sea_query::Expr;
 use validator::Validate;
 
-use sea_orm::{query::*, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, RelationTrait, Set, TransactionTrait};
+use sea_orm::{query::*, ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel, RelationTrait, Set, TransactionTrait};
 
 
 #[get("/subjects")]

@@ -1,4 +1,4 @@
-use crate::{entities::{ accounts, teachers, users}, STUDENT_ROLE_ID, TEACHER_ROLE_ID};
+use crate::{entities::{ accounts, teachers, users}, TEACHER_ROLE_ID};
 use actix_web::{get,post,put,delete, web, HttpResponse, Responder};
 use validator::Validate;
 
