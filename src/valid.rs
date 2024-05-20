@@ -5,7 +5,7 @@ use validator::ValidationError;
 // );
 
 pub fn validate_password(pass: &String)->Result<(),ValidationError>{
-    let regex = Regex::new(r"").unwrap();
+    let regex = Regex::new(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$").unwrap();
 
     if regex.is_match(pass){
         Ok(())

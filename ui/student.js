@@ -123,6 +123,12 @@ async function fetch_marks(selectedSubject) {
     }
 }
 
+async function fetch_profile(){
+
+}
+async function update_password(){
+    
+}
 
 document.addEventListener('DOMContentLoaded',async function () {
     // Your JavaScript code here
