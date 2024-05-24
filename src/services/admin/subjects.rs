@@ -13,19 +13,18 @@ pub async fn get_admin_subjects(pool: web::Data<DatabaseConnection>)-> impl Resp
         Err(_)=>return HttpResponse::InternalServerError().finish()
     };
 
-    // "SELECT 
+    // SELECT 
     //     sb.id,
     //     sb.name,
     //     sb.description,
     //     sb.semestr,
-    //     CONCAT_WS (' ',u.firstname,u.secondname,u.lastname) AS teacher,
     //     t.occupation 
     // FROM 
     //     subjects sb
     // INNER JOIN
     //     teachers t ON t.email = sb.teacher_id
     // INNER JOIN
-    //     users u ON t.email = u.email";
+    //     users u ON t.email = u.email;
 
     let result = subjects::Entity::find()
         .select_only()
@@ -47,8 +46,8 @@ pub async fn get_admin_subjects(pool: web::Data<DatabaseConnection>)-> impl Resp
             users::Column::Lastname,
         ])       
         .column(teachers::Column::Occupation)
-        .join(JoinType::InnerJoin,teachers::Relation::Subjects.def().rev())
-        .join(JoinType::InnerJoin, users::Relation::Teachers.def().rev())
+        .join(JoinType::LeftJoin,subjects::Relation::Teachers.def())
+        .join(JoinType::LeftJoin, teachers::Relation::Users.def())
         .into_json()
         .all(&transaction)
         .await;

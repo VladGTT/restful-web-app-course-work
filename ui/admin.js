@@ -1165,7 +1165,7 @@ class SubjectsView {
     var options = {
       method: 'DELETE',
       headers: headers,
-      body: JSON.stringify({"id":cells[0].textContent})
+      body: JSON.stringify({"id":parseInt(cells[0].textContent)})
     };
 
     const response = await fetch(`http://${server}/api/admin/subjects`, options);

@@ -47,10 +47,10 @@ async function fetch_profile() {
     };
 
     try {
-        const response = await fetch(`http://${server}/api/teacher/profile`, options);
+        const response = await fetch(`http://${server}/api/student/profile`, options);
         const data = await response.json();
 
-        document.getElementById("profileModalLabel").textContent = `${data[0]["lastname"]} ${data[0]["secondname"]} ${data[0]["firstname"]} [${data[0]["occupation"]}]`;
+        document.getElementById("profileModalLabel").textContent = `${data[0]["lastname"]} ${data[0]["secondname"]} ${data[0]["firstname"]} [${data[0]["group"]}]`;
         document.getElementById("profileEmail").value = `${data[0]["email"]}`;
     } catch (error) {
         console.log(error);
@@ -76,7 +76,7 @@ async function update_password() {
     };
 
     try {
-        const response = await fetch(`http://${server}/api/teacher/profile`, options);
+        const response = await fetch(`http://${server}/api/student/profile`, options);
         const data = await response.json();
         console.log(data);
 
@@ -86,10 +86,11 @@ async function update_password() {
 }
 
 class SubjectsView {
-    constructor(onChangeDataEventHandler) {
+    constructor(onChangeDataEventHandler,onSelectedSubjectUpdated) {
         var subjectsList = document.getElementById("subjectsListId");
 
         this.callback = onChangeDataEventHandler;
+        this.selectionUpdated = onSelectedSubjectUpdated;
 
         this.selectedSubject = {}
 
@@ -120,6 +121,7 @@ class SubjectsView {
             name: subjectsList.children[0].textContent
         }
         document.getElementById("subjectsSelectButton").textContent = this.selectedSubject.name;
+        this.selectionUpdated()
 
     }
     #onSelectSubjectButtonClickedEventHandler(event) {
@@ -129,6 +131,7 @@ class SubjectsView {
         }
 
         document.getElementById("subjectsSelectButton").textContent = this.selectedSubject.name;
+        this.selectionUpdated()
 
     }
 
@@ -281,31 +284,30 @@ class StatsView {
         `<div class="container p-4 gap-4 align-items-center">
             <div class="row p-4 align-items-center gap-4">
               <div class="col border border-primary bg-opacity-10 bg-primary rounded">
-                <p class="h3 text-center pt-3">Найбільш відвідане зайняття</p>
+                <p class="h3 text-center pt-3">Середній бал по предмету</p>
                 <p class="h4 text-center text-body-secondary" id="averageMarkPerSubject">Значення</p>
-                <p class="">Зайняття на яке прийшло найбільше студентів</p>
+                <p class="">Середнє арифметичне оцінок за всі завдання</p>
               </div>
               <div class="col border border-primary bg-opacity-10 bg-primary rounded">
-                <p class="h3 text-center pt-3">Найменш відвідане зайняття</p>
+                <p class="h3 text-center pt-3">Найкраще написане завдання</p>
                 <p class="h4 text-center text-body-secondary" id="taskWithHighestMark">Значення</p>
-                <p class="">Зайняття на яке прийшло найменше студентів</p>
+                <p class="">Завдання за найвищою оцінкою</p>
               </div>
               <div class="col border border-primary bg-opacity-10 bg-primary rounded">
-                <p class="h3 text-center pt-3">Найбільш виконане завдання</p>
+                <p class="h3 text-center pt-3">Найгірше написане завдання</p>
                 <p class="h4 text-center text-body-secondary" id="taskWithLowestMark">Значення</p>
-                <p class="">Завдання, яке виконало найбільше студентів</p>
+                <p class="">Завдання за найнижчею оцінкою</p>
               </div>
             </div>
             <div class="row p-4 align-items-center gap-4">
               <div class="col border border-primary bg-opacity-10 bg-primary rounded">
-                <p class="h3 text-center pt-3">Найменш виконане завдання</p>
+                <p class="h3 text-center pt-3">Кількість відвіданих зайнять</p>
                 <p class="h4 text-center text-body-secondary" id="numberOfAttendedMeetings">Значення</p>
-                <p class="">Завдання, яке виконало найменше студентів</p>
+                
               </div>
               <div class="col border border-primary bg-opacity-10 bg-primary rounded">
-                <p class="h3 text-center pt-3">Середня оцінка студентів</p>
+                <p class="h3 text-center pt-3">Кількість виконаних завдань</p>
                 <p class="h4 text-center text-body-secondary" id="numberOfCompletedTasks">Значення</p>
-                <p class="">Середнє арифметичне середніх оцінок студентів</p>
               </div>
             </div>
           </div>`;
@@ -434,32 +436,45 @@ document.addEventListener('DOMContentLoaded',async function () {
     var selector = new SubjectsView(async () => {
         let data = await getSubjectsData();
         return data;
+    },async () =>{
+        var temp = new StatsView(async () => {
+            return await getStatsData(selector.selectedSubject.id)
+        });
     })
-
-    // I'm so sorry for this, But i had no better idea
-    await new Promise(resolve => setTimeout(resolve, 50));
-
-    var temp = new StatsView(async () => {
-        return await getStatsData(selector.selectedSubject.id)
-    });
+    
 
     document.getElementById('pills-tab').addEventListener('click', async function (event) {
         console.log(event.target.textContent)
         switch (event.target.textContent) {
             case "Статистика":
-                var temp = new StatsView(async () => {
-                    return await getStatsData(selector.selectedSubject.id)
-                });
+                var selector = new SubjectsView(async () => {
+                    let data = await getSubjectsData();
+                    return data;
+                },async () =>{
+                    var temp = new StatsView(async () => {
+                        return await getStatsData(selector.selectedSubject.id)
+                    });
+                })
                 break;
             case "Успішність":
-                var temp = new TasksView(async () => {
-                    return await getTasksData(selector.selectedSubject.id)
-                });
+                var selector = new SubjectsView(async () => {
+                    let data = await getSubjectsData();
+                    return data;
+                },async () =>{
+                    var temp = new TasksView(async () => {
+                        return await getTasksData(selector.selectedSubject.id)
+                    });
+                })
                 break;
             case "Відвідуваність":
-                var temp = new MeetingsView(async () => {
-                    return await getMeetingsData(selector.selectedSubject.id)
-                });
+                var selector = new SubjectsView(async () => {
+                    let data = await getSubjectsData();
+                    return data;
+                },async () =>{
+                    var temp = new MeetingsView(async () => {
+                        return await getMeetingsData(selector.selectedSubject.id)
+                    });
+                })
                 break;
             
         }

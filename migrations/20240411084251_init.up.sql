@@ -116,10 +116,11 @@ ALTER TABLE `students` ADD FOREIGN KEY (`email`) REFERENCES `users` (`email`) ON
 
 -- Populate `accounts` table
 INSERT INTO `accounts` (`email`, `password`, `role`) VALUES
-('teacher1@example.com', 'password1', 1),
-('teacher2@example.com', 'password2', 1),
-('student1@example.com', 'password3', 2),
-('student2@example.com', 'password4', 2);
+('teacher1@example.com', 'Password#1', 1),
+('teacher2@example.com', 'Password#2', 1),
+('student1@example.com', 'Password#1', 2),
+('student2@example.com', 'Password#2', 2),
+('admin@example.com', 'Admin#01', 3);
 
 
 -- Populate `users` table

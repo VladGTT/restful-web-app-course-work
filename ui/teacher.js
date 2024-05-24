@@ -50,8 +50,8 @@ async function fetch_profile() {
         const response = await fetch(`http://${server}/api/teacher/profile`, options);
         const data = await response.json();
 
-        document.getElementById("profileModalLabel").textContent = `${data[0]["lastname"]} ${data[0]["secondname"]} ${data[0]["firstname"]} [${data[0]["occupation"]}]`;
-        document.getElementById("profileEmail").value = `${data[0]["email"]}`;
+        document.getElementById("profileModalLabel").textContent = `${data["lastname"]} ${data["secondname"]} ${data["firstname"]} [${data["occupation"]}]`;
+        document.getElementById("profileEmail").value = `${data["email"]}`;
     } catch (error) {
         console.log(error);
     }
@@ -86,10 +86,11 @@ async function update_password() {
 }
 
 class SubjectsView {
-    constructor(onChangeDataEventHandler) {
+    constructor(onChangeDataEventHandler,onSelectedSubjectUpdated) {
         var subjectsList = document.getElementById("subjectsListId");
 
         this.callback = onChangeDataEventHandler;
+        this.selectionUpdated = onSelectedSubjectUpdated;
 
         this.selectedSubject = {}
 
@@ -121,6 +122,8 @@ class SubjectsView {
         }
         document.getElementById("subjectsSelectButton").textContent = this.selectedSubject.name;
 
+        this.selectionUpdated()
+
     }
     #onSelectSubjectButtonClickedEventHandler(event) {
         this.selectedSubject = {
@@ -129,6 +132,7 @@ class SubjectsView {
         }
 
         document.getElementById("subjectsSelectButton").textContent = this.selectedSubject.name;
+        this.selectionUpdated()
 
     }
 
@@ -524,11 +528,11 @@ class TasksView {
         var createForm = document.getElementById("createFormId");
 
         var data = {
-            "name": createForm[1].value,
-            "description": createForm[2].value,
+            "name": createForm[0].value,
+            "description": createForm[1].value,
             "subject_id": parseInt(this.selectedSubject.id),
-            "due_to": createForm[3].value,
-            "max_point": parseFloat(createForm[4].value),
+            "due_to": createForm[2].value,
+            "max_point": parseFloat(createForm[3].value),
         }
 
         var headers = {
@@ -1519,62 +1523,91 @@ document.addEventListener('DOMContentLoaded',async function () {
         window.location.href = "login.html";
     });
 
+
     var selector = new SubjectsView(async () => {
         let data = await getSubjectsData();
         return data;
-    })
-
-    // I'm so sorry for this, But i had no better idea
-    await new Promise(resolve => setTimeout(resolve, 50));
-
-    var temp = new StatsView(async () => {
-        return await getStatsData(selector.selectedSubject.id)
+    },async () =>{
+        var temp = new StatsView(async () => {
+            return await getStatsData(selector.selectedSubject.id)
+        });
     });
 
     document.getElementById('pills-tab').addEventListener('click', async function (event) {
         console.log(event.target.textContent)
         switch (event.target.textContent) {
             case "Статистика":
-                var temp = new StatsView(async () => {
-                    return await getStatsData(selector.selectedSubject.id)
+                var selector = new SubjectsView(async () => {
+                    let data = await getSubjectsData();
+                    return data;
+                },async () =>{
+                    var temp = new StatsView(async () => {
+                        return await getStatsData(selector.selectedSubject.id)
+                    });
                 });
                 break;
             case "Успішність":
-                var temp = new MarksView(async () => {
-                    return {
-                        marks: await getMarksData(selector.selectedSubject.id),
-                        selectedSubject: selector.selectedSubject,
-                        tasks: await getTasksData(selector.selectedSubject.id),
-                        students: await getStudentsData(selector.selectedSubject.id)
-                    }
+                var selector = new SubjectsView(async () => {
+                    let data = await getSubjectsData();
+                    return data;
+                },async () =>{
+                    var temp = new MarksView(async () => {
+                        return {
+                            marks: await getMarksData(selector.selectedSubject.id),
+                            selectedSubject: selector.selectedSubject,
+                            tasks: await getTasksData(selector.selectedSubject.id),
+                            students: await getStudentsData(selector.selectedSubject.id)
+                        }
+                    });
                 });
+
                 break;
             case "Відвідуваність":
-                var temp = new AttendanceView(async () => {
-                    return {
-                        attendance: await getAttendanceData(selector.selectedSubject.id),
-                        selectedSubject: selector.selectedSubject,
-                        meetings: await getMeetingsData(selector.selectedSubject.id),
-                        students: await getStudentsData(selector.selectedSubject.id)
-                    }
+                var selector = new SubjectsView(async () => {
+                    let data = await getSubjectsData();
+                    return data;
+                },async () =>{
+                    var temp = new AttendanceView(async () => {
+                        return {
+                            attendance: await getAttendanceData(selector.selectedSubject.id),
+                            selectedSubject: selector.selectedSubject,
+                            meetings: await getMeetingsData(selector.selectedSubject.id),
+                            students: await getStudentsData(selector.selectedSubject.id)
+                        }
+                    });
                 });
                 break;
             case "Завдання":
-                var temp = new TasksView(async () => {
-                    return {
-                        tasks: await getTasksData(selector.selectedSubject.id),
-                        selectedSubject: selector.selectedSubject
-                    }
+                var selector = new SubjectsView(async () => {
+                    let data = await getSubjectsData();
+                    return data;
+                },async () =>{
+                    var temp = new TasksView(async () => {
+                        return {
+                            tasks: await getTasksData(selector.selectedSubject.id),
+                            selectedSubject: selector.selectedSubject
+                        }
+                    });
                 });
                 break;
             case "Зайняття":
-                var temp = new MeetingsView(async () => {
-                    return await getMeetingsData(selector.selectedSubject.id)
+                var selector = new SubjectsView(async () => {
+                    let data = await getSubjectsData();
+                    return data;
+                },async () =>{
+                    var temp = new MeetingsView(async () => {
+                        return await getMeetingsData(selector.selectedSubject.id)
+                    });
                 });
                 break;
             case "Студенти":
-                var temp = new StudentsView(async () => {
-                    return await getStudentsData(selector.selectedSubject.id)
+                var selector = new SubjectsView(async () => {
+                    let data = await getSubjectsData();
+                    return data;
+                },async () =>{
+                    var temp = new StudentsView(async () => {
+                        return await getStudentsData(selector.selectedSubject.id)
+                    });
                 });
                 break;
         }
