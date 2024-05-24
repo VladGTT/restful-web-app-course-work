@@ -1,5 +1,7 @@
 
+
 const server = window.sessionStorage.getItem("server");
+
 
 async function save_pdf() {
     var win = window.open('', '', 'height=700,width=700');
@@ -47,10 +49,10 @@ async function fetch_profile() {
     };
 
     try {
-        const response = await fetch(`http://${server}/api/student/profile`, options);
+        const response = await fetch(`http://${server}/api/teacher/profile`, options);
         const data = await response.json();
 
-        document.getElementById("profileModalLabel").textContent = `${data[0]["lastname"]} ${data[0]["secondname"]} ${data[0]["firstname"]} [${data[0]["group"]}]`;
+        document.getElementById("profileModalLabel").textContent = `${data[0]["lastname"]} ${data[0]["secondname"]} ${data[0]["firstname"]} [${data[0]["occupation"]}]`;
         document.getElementById("profileEmail").value = `${data[0]["email"]}`;
     } catch (error) {
         console.log(error);
@@ -72,11 +74,12 @@ async function update_password() {
     var options = {
         method: 'PUT',
         headers: headers,
+        headers: headers,
         body: JSON.stringify(payload)
     };
 
     try {
-        const response = await fetch(`http://${server}/api/student/profile`, options);
+        const response = await fetch(`http://${server}/api/teacher/profile`, options);
         const data = await response.json();
         console.log(data);
 
@@ -482,4 +485,5 @@ document.addEventListener('DOMContentLoaded',async function () {
 
     document.getElementById("profileButton").addEventListener("click", fetch_profile)
     document.getElementById("profileUpdateForm").addEventListener("submit", update_password)
+
 });

@@ -2,7 +2,9 @@
 const server = window.sessionStorage.getItem("server");
 
 async function save_pdf() {
+async function save_pdf() {
     var win = window.open('', '', 'height=700,width=700');
+    const table = document.getElementById("table").parentNode
     const table = document.getElementById("table").parentNode
     const docString = `<!DOCTYPE html>
     <html lang="en">
@@ -29,11 +31,14 @@ async function save_pdf() {
 
 
 
+
+function validatePassword(password) {
 function validatePassword(password) {
     const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     return pattern.test(password)
 }
 
+async function fetch_profile() {
 async function fetch_profile() {
 
     var headers = {
@@ -57,20 +62,24 @@ async function fetch_profile() {
     }
 }
 async function update_password() {
+async function update_password() {
     var headers = {
         // 'Content-Type': 'application/json',
         'AUTHORIZATION': window.sessionStorage.getItem('authorization')
     };
     let password = document.getElementById("profilePassword").value;
     if (!validatePassword(password)) {
+    if (!validatePassword(password)) {
         alert("Incorrect password")
         return
     }
     var payload = {
         password: password
+        password: password
     }
     var options = {
         method: 'PUT',
+        headers: headers,
         headers: headers,
         body: JSON.stringify(payload)
     };
@@ -165,8 +174,10 @@ class StudentsView {
         document.getElementById("tableContainer").replaceChildren(...tempContainer.childNodes);
         document.getElementById("tableButtonsId").classList.add("visually-hidden")
         document.getElementById("printButton").classList.remove("visually-hidden")
+        document.getElementById("printButton").classList.remove("visually-hidden")
 
         document.getElementById("table").addEventListener("click", this.onTableClickEventHandler)
+        document.getElementById("printButton").addEventListener("click", save_pdf)
         document.getElementById("printButton").addEventListener("click", save_pdf)
 
         this.fetchData()
@@ -236,8 +247,12 @@ class MeetingsView {
         document.getElementById("tableContainer").replaceChildren(...tempContainer.childNodes);
         document.getElementById("tableButtonsId").classList.add("visually-hidden")
         document.getElementById("printButton").classList.remove("visually-hidden")
+        document.getElementById("printButton").classList.remove("visually-hidden")
 
         document.getElementById("table").addEventListener("click", this.onTableClickEventHandler)
+
+        document.getElementById("printButton").addEventListener("click", save_pdf)
+
 
         document.getElementById("printButton").addEventListener("click", save_pdf)
 
@@ -382,6 +397,8 @@ class TasksView {
         let createForm = document.getElementById("createFormId");
         createForm.addEventListener("submit", this.onSubmitCreationEventHandler);
 
+        document.getElementById("printButton").classList.remove("visually-hidden")
+        document.getElementById("printButton").addEventListener("click", save_pdf)
         document.getElementById("printButton").classList.remove("visually-hidden")
         document.getElementById("printButton").addEventListener("click", save_pdf)
 
@@ -711,6 +728,8 @@ class AttendanceView {
 
         document.getElementById("printButton").classList.remove("visually-hidden")
         document.getElementById("printButton").addEventListener("click", save_pdf)
+        document.getElementById("printButton").classList.remove("visually-hidden")
+        document.getElementById("printButton").addEventListener("click", save_pdf)
 
         this.fetchData();
     }
@@ -722,6 +741,8 @@ class AttendanceView {
         let newItemHTML = '';
 
         data.attendance.forEach(element => {
+            newItemHTML +=
+                `<tr>
             newItemHTML +=
                 `<tr>
                 <td hidden>${element["email"]}</td>
@@ -754,12 +775,22 @@ class AttendanceView {
         let attendies = ''
         this.students.forEach(element => {
             attendies += `<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</option>`;
+        let attendies = ''
+        this.students.forEach(element => {
+            attendies += `<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</option>`;
         });
 
         let meetings = ''
         this.meetings.forEach(element => {
             meetings += `<option value="${element["id"]}">${element["name"]}</option>`;
+
+        let meetings = ''
+        this.meetings.forEach(element => {
+            meetings += `<option value="${element["id"]}">${element["name"]}</option>`;
         });
+
+        let newItemHTML =
+            `<div class="modal-body p-5 pt-0">
 
         let newItemHTML =
             `<div class="modal-body p-5 pt-0">
@@ -803,12 +834,22 @@ class AttendanceView {
             let attendies = ''
             this.students.forEach(element => {
                 attendies += `<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]})</option>`;
+            let attendies = ''
+            this.students.forEach(element => {
+                attendies += `<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]})</option>`;
             });
 
             let meetings = ''
             this.meetings.forEach(element => {
                 meetings += `<option value="${element["id"]}">${element["name"]}</option>`;
+
+            let meetings = ''
+            this.meetings.forEach(element => {
+                meetings += `<option value="${element["id"]}">${element["name"]}</option>`;
             });
+
+            newItemHTML =
+                `<div class="modal-body p-5 pt-0">
 
             newItemHTML =
                 `<div class="modal-body p-5 pt-0">
@@ -830,6 +871,7 @@ class AttendanceView {
                     </div>
                     <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit" data-bs-dismiss="modal">Редагувати</button>
             </div>`;
+
 
         }
 
@@ -1056,6 +1098,8 @@ class MarksView {
 
         document.getElementById("printButton").classList.remove("visually-hidden")
         document.getElementById("printButton").addEventListener("click", save_pdf)
+        document.getElementById("printButton").classList.remove("visually-hidden")
+        document.getElementById("printButton").addEventListener("click", save_pdf)
 
         this.fetchData();
     }
@@ -1067,6 +1111,8 @@ class MarksView {
         let newItemHTML = '';
 
         data.marks.forEach(element => {
+            newItemHTML +=
+                `<tr>
             newItemHTML +=
                 `<tr>
                 <td hidden>${element["email"]}</td>
@@ -1099,12 +1145,21 @@ class MarksView {
         let attendies = ''
         this.students.forEach(element => {
             attendies += `<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</option>`;
+        let attendies = ''
+        this.students.forEach(element => {
+            attendies += `<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]}</option>`;
         });
+
+        let tasks = ''
+        this.tasks.forEach(element => {
 
         let tasks = ''
         this.tasks.forEach(element => {
             tasks += `<option value="${element["id"]}">${element["name"]}</option>`;
         });
+
+        let newItemHTML =
+            `<div class="modal-body p-5 pt-0">
 
         let newItemHTML =
             `<div class="modal-body p-5 pt-0">
@@ -1148,12 +1203,21 @@ class MarksView {
             let attendies = ''
             this.students.forEach(element => {
                 attendies += `<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]})</option>`;
+            let attendies = ''
+            this.students.forEach(element => {
+                attendies += `<option value="${element["email"]}">${element["lastname"]} ${element["secondname"]} ${element["firstname"]})</option>`;
             });
+
+            let tasks = ''
+            this.tasks.forEach(element => {
 
             let tasks = ''
             this.tasks.forEach(element => {
                 tasks += `<option value="${element["id"]}">${element["name"]}</option>`;
             });
+
+            newItemHTML =
+                `<div class="modal-body p-5 pt-0">
 
             newItemHTML =
                 `<div class="modal-body p-5 pt-0">
@@ -1175,6 +1239,7 @@ class MarksView {
                     </div>
                     <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit" data-bs-dismiss="modal">Редагувати</button>
             </div>`;
+
 
         }
 
@@ -1369,6 +1434,76 @@ class StatsView {
     }
 }
 
+class StatsView {
+    constructor(onChangeDataEventHandler) {
+        this.selectedRow = null;
+
+        this.callback = onChangeDataEventHandler;
+        let newItemHTML =
+        `<div class="container p-4 gap-4 align-items-center">
+            <div class="row p-4 align-items-center gap-4">
+              <div class="col border border-primary bg-opacity-10 bg-primary rounded">
+                <p class="h3 text-center pt-3">Найбільш відвідане зайняття</p>
+                <p class="h4 text-center text-body-secondary" id="mostAttendedMeeting">Значення</p>
+                <p class="">Зайняття на яке прийшло найбільше студентів</p>
+              </div>
+              <div class="col border border-primary bg-opacity-10 bg-primary rounded">
+                <p class="h3 text-center pt-3">Найменш відвідане зайняття</p>
+                <p class="h4 text-center text-body-secondary" id="leastAttendedMeeting">Значення</p>
+                <p class="">Зайняття на яке прийшло найменше студентів</p>
+              </div>
+              <div class="col border border-primary bg-opacity-10 bg-primary rounded">
+                <p class="h3 text-center pt-3">Найбільш виконане завдання</p>
+                <p class="h4 text-center text-body-secondary" id="mostCompletedAssignment">Значення</p>
+                <p class="">Завдання, яке виконало найбільше студентів</p>
+              </div>
+            </div>
+            <div class="row p-4 align-items-center gap-4">
+              <div class="col border border-primary bg-opacity-10 bg-primary rounded">
+                <p class="h3 text-center pt-3">Найменш виконане завдання</p>
+                <p class="h4 text-center text-body-secondary" id="leastCompletedAssignment">Значення</p>
+                <p class="">Завдання, яке виконало найменше студентів</p>
+              </div>
+              <div class="col border border-primary bg-opacity-10 bg-primary rounded">
+                <p class="h3 text-center pt-3">Середня оцінка студентів</p>
+                <p class="h4 text-center text-body-secondary" id="meanStudentMeanMark">Значення</p>
+                <p class="">Середнє арифметичне середніх оцінок студентів</p>
+              </div>
+              <div class="col border border-primary bg-opacity-10 bg-primary rounded">
+                <p class="h3 text-center pt-3">Середня присутність студентів</p>
+                <p class="h4 text-center text-body-secondary" id="meanStudentMeanPercentage">Значення</p>
+                <p class="">Середнє арифметичне середніх значень присутності студентів</p>
+              </div>
+            </div>
+          </div>`;
+        let tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHTML;
+        document.getElementById("tableContainer").replaceChildren(...tempContainer.childNodes);
+        document.getElementById("tableButtonsId").classList.add("visually-hidden")
+        document.getElementById("printButton").classList.add("visually-hidden")
+
+        this.fetchData()
+    }
+
+    async fetchData() {
+        let data = await this.callback();
+
+        let mostAttendedMeeting = data["most_attended_meeting"] ?? {"name": "NaN","attendance_count": "NaN"}
+        let leastAttendedMeeting = data["least_attended_meeting"] ?? {"name": "NaN","attendance_count": "NaN"}
+        let mostCompletedAssignment = data["most_completed_assignment"] ?? {"name": "NaN","completion_count": "NaN"}
+        let leastCompletedAssignment = data["least_completed_assignment"] ?? {"name": "NaN","completion_count": "NaN"}
+        let meanStudentMeanMark = data["mean_student_mean_mark"] ?? {"mean_of_mean_marks": "NaN"}
+        let meanStudentMeanPercentage = data["mean_student_mean_percentage"] ?? {"mean_of_mean_attendance": "NaN"}
+
+        document.getElementById("mostAttendedMeeting").textContent = `${mostAttendedMeeting["name"]} (${mostAttendedMeeting["attendance_count"]})`;
+        document.getElementById("leastAttendedMeeting").textContent = `${leastAttendedMeeting["name"]} (${leastAttendedMeeting["attendance_count"]})`;
+        document.getElementById("mostCompletedAssignment").textContent = `${mostCompletedAssignment["name"]} (${mostCompletedAssignment["completion_count"]})`;
+        document.getElementById("leastCompletedAssignment").textContent = `${leastCompletedAssignment["name"]} (${leastCompletedAssignment["completion_count"]})`;
+        document.getElementById("meanStudentMeanMark").textContent = meanStudentMeanMark["mean_of_mean_marks"];
+        document.getElementById("meanStudentMeanPercentage").textContent = meanStudentMeanPercentage["mean_of_mean_attendance"];
+    }
+}
+
 
 
 
@@ -1490,13 +1625,27 @@ async function getStatsData(subjectId) {
         'Content-Type': 'application/json',
         'AUTHORIZATION': window.sessionStorage.getItem('authorization')
     };
+async function getStatsData(subjectId) {
+    var headers = {
+        'Content-Type': 'application/json',
+        'AUTHORIZATION': window.sessionStorage.getItem('authorization')
+    };
 
     // Define the options for the fetch request
     var options = {
         method: 'GET',
         headers: headers,
     };
+    // Define the options for the fetch request
+    var options = {
+        method: 'GET',
+        headers: headers,
+    };
 
+    let responce = await fetch(`http://${server}/api/teacher/stats?subject_id=${subjectId}`, options);
+    let data = await responce.json();
+    return data;
+}
     let responce = await fetch(`http://${server}/api/teacher/stats?subject_id=${subjectId}`, options);
     let data = await responce.json();
     return data;
@@ -1515,8 +1664,13 @@ async function getStatsData(subjectId) {
 document.addEventListener('DOMContentLoaded',async function () {
 
     if (window.sessionStorage.getItem("role") != 1) {
+
+document.addEventListener('DOMContentLoaded',async function () {
+
+    if (window.sessionStorage.getItem("role") != 1) {
         window.location.href = "login.html";
     }
+
 
     document.getElementById("logoutButtonId").addEventListener("click", async function (event) {
         window.sessionStorage.removeItem('authorization');
@@ -1613,6 +1767,8 @@ document.addEventListener('DOMContentLoaded',async function () {
         }
     });
 
+    document.getElementById("profileButton").addEventListener("click", fetch_profile)
+    document.getElementById("profileUpdateForm").addEventListener("submit", update_password)
     document.getElementById("profileButton").addEventListener("click", fetch_profile)
     document.getElementById("profileUpdateForm").addEventListener("submit", update_password)
 });
